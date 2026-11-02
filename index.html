@@ -74,15 +74,47 @@
     color:var(--gold-bright);font-size:16px;
   }
   .brand-name{font-family:'Cinzel',serif;font-size:15px;color:var(--gold-bright);}
-  .lang-toggle{
-    display:flex;background:var(--bg-panel);border:1px solid var(--line);
-    border-radius:999px;overflow:hidden;
+  .lang-picker-btn{
+    display:flex;align-items:center;gap:6px;background:var(--bg-panel);border:1px solid var(--line);
+    border-radius:999px;padding:7px 14px;font-size:13px;color:var(--gold-bright);
+    cursor:pointer;font-family:'Inter',sans-serif;max-width:120px;
   }
-  .lang-toggle button{
-    background:transparent;border:none;color:var(--muted);
-    padding:7px 14px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;
+  .lang-picker-btn span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* LANGUAGE PICKER MODAL */
+  .lang-modal-overlay{
+    position:fixed;inset:0;background:rgba(5,7,14,0.72);z-index:900;
+    display:flex;align-items:flex-end;justify-content:center;
   }
-  .lang-toggle button.active{background:var(--gold);color:#1a1305;font-weight:600;}
+  .lang-modal-overlay.hidden{display:none;}
+  .lang-modal{
+    background:linear-gradient(180deg,var(--bg-panel),var(--bg-panel-2));
+    border:1px solid var(--line);border-radius:18px 18px 0 0;
+    width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  .lang-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .lang-modal-close{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
+  .lang-search-input{
+    width:100%;background:var(--bg-deep);border:1.5px solid var(--line);border-radius:999px;
+    padding:10px 16px;color:var(--ink);font-size:14px;margin-bottom:10px;font-family:'Inter',sans-serif;
+  }
+  .lang-search-input:focus{outline:none;border-color:var(--gold);}
+  .lang-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:2px;}
+  .lang-item{
+    display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;
+    background:transparent;border:1px solid transparent;font-family:'Inter',sans-serif;
+  }
+  .lang-item:hover,.lang-item:active{background:rgba(201,167,105,0.08);}
+  .lang-item.selected{border-color:var(--gold);background:rgba(201,167,105,0.12);}
+  .lang-item .flag{font-size:18px;flex-shrink:0;}
+  .lang-item .names{display:flex;flex-direction:column;text-align:start;}
+  .lang-item .native{font-size:14px;color:var(--ink);}
+  .lang-item .english{font-size:11.5px;color:var(--muted);}
+  .lang-item .check{margin-inline-start:auto;color:var(--gold-bright);flex-shrink:0;}
+  .lang-loading-note{font-size:12px;color:var(--muted);text-align:center;padding:8px;}
+  .lang-loading-note.hidden{display:none;}
+  .lang-empty-note{font-size:13px;color:var(--muted);text-align:center;padding:20px 10px;}
 
   /* HERO */
   .hero{padding:26px 0 10px;text-align:center;position:relative;}
@@ -383,10 +415,9 @@
     <button class="install-header-btn" id="installHeaderBtn" onclick="handleInstallClick()">
       <span>📲</span><span data-i="installAppBtn">ایپ Install کریں</span>
     </button>
-    <div class="lang-toggle">
-      <button id="btnUr" class="active" onclick="setLang('ur')">اردو</button>
-      <button id="btnEn" onclick="setLang('en')">EN</button>
-    </div>
+    <button class="lang-picker-btn" id="langPickerBtn" onclick="openLangModal()">
+      <span>🌐</span><span id="langPickerLabel">اردو</span>
+    </button>
   </div>
 </header>
 
@@ -988,6 +1019,18 @@
   <div data-i="footerText">یہ ویب ایپ صرف روایتی و تفریحی مقاصد کے لیے ہے۔ یہ طبی تشخیص یا سائنسی پیش گوئی نہیں کرتی۔</div>
 </footer>
 
+<div class="lang-modal-overlay hidden" id="langModalOverlay" onclick="if(event.target===this) closeLangModal();">
+  <div class="lang-modal">
+    <div class="lang-modal-header">
+      <strong data-i="langModalTitle">زبان منتخب کریں</strong>
+      <button class="lang-modal-close" onclick="closeLangModal()" aria-label="Close">✕</button>
+    </div>
+    <input type="text" class="lang-search-input" id="langSearchInput" data-i-ph="langSearchPlaceholder" placeholder="زبان تلاش کریں / Search language…" oninput="renderLangList(this.value)">
+    <div class="lang-list" id="langList"></div>
+    <div class="lang-loading-note hidden" id="langLoadingNote" data-i="langLoadingNote">زبان لوڈ کی جا رہی ہے…</div>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    TRANSLATIONS
@@ -1085,7 +1128,24 @@ const I18N = {
     startFaceScanBtn:"اسکین شروع کریں",
     faceScanStatusDetecting:"چہرہ تلاش کیا جا رہا ہے…",
     faceScanStatusHold:"چہرے کو ساکن رکھیں…",
-    faceScanStatusCapturing:"تصویر لی جا رہی ہے…"
+    faceScanStatusCapturing:"تصویر لی جا رہی ہے…",
+    langModalTitle:"زبان منتخب کریں", langSearchPlaceholder:"زبان تلاش کریں…",
+    langLoadingNote:"زبان لوڈ کی جا رہی ہے…", langLoadFailedNote:"زبان لوڈ نہ ہو سکی، انگریزی دکھائی جا رہی ہے۔",
+    langNoResults:"کوئی زبان نہیں ملی",
+    field_thickness:"موٹائی", field_spacing:"فاصلہ", field_level:"سطح", field_location:"مقام",
+    field_sun_line:"سورج کی لکیر", field_health_line:"صحت کی لکیر", field_marriage_lines:"شادی کی لکیریں",
+    field_travel_lines:"سفر کی لکیریں", field_influence_lines:"اثر کی لکیریں", field_bracelets:"کلائی کی لکیریں",
+    field_confidence_trait:"اعتماد", field_communication:"بات چیت", field_emotional_style:"جذباتی انداز",
+    field_decision_making:"فیصلہ سازی", field_creativity:"تخلیقی صلاحیت", field_leadership:"قیادت",
+    field_tendencies:"رجحان", field_business_tendency:"کاروباری رجحان", field_communication_work:"مواصلاتی کام",
+    field_creative_work:"تخلیقی کام", field_stability_vs_change:"استحکام بمقابلہ تبدیلی",
+    field_emotional_nature:"جذباتی فطرت", field_attachment_style:"لگاؤ کا انداز",
+    field_financial_tendencies:"مالی رجحان", field_stability:"استحکام", field_risk_taking:"خطرہ مول لینا",
+    field_business_inclination:"کاروباری رجحان",
+    lineLabelHeart:"لکیرِ دل (Heart Line)", lineLabelHead:"لکیرِ دماغ (Head Line)",
+    lineLabelLife:"لکیرِ حیات (Life Line)", lineLabelFate:"لکیرِ مقدر (Fate Line)",
+    auraDisclaimerDefault:"یہ Aura reading ایک روایتی رنگ تھراپی طرز کا تفریحی تصور ہے۔ اس کی کوئی سائنسی یا طبی بنیاد نہیں، اور یہ کسی حقیقی توانائی کے میدان، جسمانی کمی، صحت یا نفسیاتی کیفیت کی پیمائش نہیں کرتی۔ اسے صرف تفریحی سمجھیں۔",
+    readingDisclaimerDefault:"یہ reading روایتی پامسٹری کی تشریحات پر مبنی ہے۔ پامسٹری سائنسی طور پر مستقبل کی پیش گوئی، بیماری کی تشخیص، fertility، اولاد کی تعداد یا جنس، موت کی عمر یا مالی کامیابی کی ضمانت دینے کا ثابت شدہ طریقہ نہیں ہے۔ اسے صرف روایتی/تفریحی interpretation سمجھیں۔"
   },
   en: {
     brandName:"Palmistry", eyebrow:"TRADITIONAL PALMISTRY · AI ASSISTED",
@@ -1179,60 +1239,263 @@ const I18N = {
     startFaceScanBtn:"Start Scan",
     faceScanStatusDetecting:"Looking for your face…",
     faceScanStatusHold:"Hold your face steady…",
-    faceScanStatusCapturing:"Capturing image…"
+    faceScanStatusCapturing:"Capturing image…",
+    langModalTitle:"Select Language", langSearchPlaceholder:"Search language…",
+    langLoadingNote:"Loading language…", langLoadFailedNote:"Couldn't load this language, showing English instead.",
+    langNoResults:"No languages found",
+    field_thickness:"Thickness", field_spacing:"Spacing", field_level:"Level", field_location:"Location",
+    field_sun_line:"Sun Line", field_health_line:"Health Line", field_marriage_lines:"Marriage Lines",
+    field_travel_lines:"Travel Lines", field_influence_lines:"Influence Lines", field_bracelets:"Bracelets",
+    field_confidence_trait:"Confidence", field_communication:"Communication", field_emotional_style:"Emotional Style",
+    field_decision_making:"Decision Making", field_creativity:"Creativity", field_leadership:"Leadership",
+    field_tendencies:"Tendencies", field_business_tendency:"Business Tendency", field_communication_work:"Communication Work",
+    field_creative_work:"Creative Work", field_stability_vs_change:"Stability vs Change",
+    field_emotional_nature:"Emotional Nature", field_attachment_style:"Attachment Style",
+    field_financial_tendencies:"Financial Tendencies", field_stability:"Stability", field_risk_taking:"Risk Taking",
+    field_business_inclination:"Business Inclination",
+    lineLabelHeart:"Heart Line", lineLabelHead:"Head Line",
+    lineLabelLife:"Life Line", lineLabelFate:"Fate Line",
+    auraDisclaimerDefault:"This Aura reading is a traditional, folk color-therapy style entertainment concept. It has no scientific or medical basis and does not measure any real energy field, deficiency, health, or psychological state. Please treat it as entertainment only.",
+    readingDisclaimerDefault:"This reading is based on traditional palmistry interpretations. Palmistry is not a scientifically proven method for predicting the future, diagnosing illness, fertility, the number or gender of children, age of death, or guaranteed financial success. Please treat it as traditional / entertainment interpretation only."
   }
 };
 /* Labels for values whose JSON key gets shown as a heading/label in the
    UI (secondary line names, mounts sub-labels, personality/career/
-   relationships/wealth field names, etc.) — without this map these
-   would fall back to a prettified English key regardless of language. */
-const FIELD_LABELS = {
-  ur: {
-    thickness:"موٹائی", spacing:"فاصلہ", level:"سطح", location:"مقام",
-    sun_line:"سورج کی لکیر", health_line:"صحت کی لکیر", marriage_lines:"شادی کی لکیریں",
-    travel_lines:"سفر کی لکیریں", influence_lines:"اثر کی لکیریں", bracelets:"کلائی کی لکیریں",
-    confidence_trait:"اعتماد", communication:"بات چیت", emotional_style:"جذباتی انداز",
-    decision_making:"فیصلہ سازی", creativity:"تخلیقی صلاحیت", leadership:"قیادت",
-    tendencies:"رجحان", business_tendency:"کاروباری رجحان", communication_work:"مواصلاتی کام",
-    creative_work:"تخلیقی کام", stability_vs_change:"استحکام بمقابلہ تبدیلی",
-    emotional_nature:"جذباتی فطرت", attachment_style:"لگاؤ کا انداز",
-    financial_tendencies:"مالی رجحان", stability:"استحکام", risk_taking:"خطرہ مول لینا",
-    business_inclination:"کاروباری رجحان"
-  },
-  en: {
-    thickness:"Thickness", spacing:"Spacing", level:"Level", location:"Location",
-    sun_line:"Sun Line", health_line:"Health Line", marriage_lines:"Marriage Lines",
-    travel_lines:"Travel Lines", influence_lines:"Influence Lines", bracelets:"Bracelets",
-    confidence_trait:"Confidence", communication:"Communication", emotional_style:"Emotional Style",
-    decision_making:"Decision Making", creativity:"Creativity", leadership:"Leadership",
-    tendencies:"Tendencies", business_tendency:"Business Tendency", communication_work:"Communication Work",
-    creative_work:"Creative Work", stability_vs_change:"Stability vs Change",
-    emotional_nature:"Emotional Nature", attachment_style:"Attachment Style",
-    financial_tendencies:"Financial Tendencies", stability:"Stability", risk_taking:"Risk Taking",
-    business_inclination:"Business Inclination"
-  }
-};
+   relationships/wealth field names, etc.) are stored as field_* keys in
+   I18N so they are translated the same way as every other UI string. */
 function trField(key){
-  return (FIELD_LABELS[currentLang] && FIELD_LABELS[currentLang][key]) || prettify(key);
+  const val = t('field_'+key);
+  return val === 'field_'+key ? prettify(key) : val;
 }
 
-let currentLang = 'ur';
+/* ============================================================
+   99-LANGUAGE SYSTEM
+   ============================================================ */
+const I18N_VERSION = 2;
+const RTL_LANGS = new Set(['ur','ar','fa','ps','he','ku','sd','ug','yi']);
+const LANGUAGES = [
+  { code:'ur', name:'Urdu', native:'اردو', flag:'🇵🇰' },
+  { code:'en', name:'English', native:'English', flag:'🇬🇧' },
+  { code:'ar', name:'Arabic', native:'العربية', flag:'🇸🇦' },
+  { code:'hi', name:'Hindi', native:'हिन्दी', flag:'🇮🇳' },
+  { code:'bn', name:'Bengali', native:'বাংলা', flag:'🇧🇩' },
+  { code:'es', name:'Spanish', native:'Español', flag:'🇪🇸' },
+  { code:'fr', name:'French', native:'Français', flag:'🇫🇷' },
+  { code:'pt', name:'Portuguese', native:'Português', flag:'🇵🇹' },
+  { code:'ru', name:'Russian', native:'Русский', flag:'🇷🇺' },
+  { code:'de', name:'German', native:'Deutsch', flag:'🇩🇪' },
+  { code:'ja', name:'Japanese', native:'日本語', flag:'🇯🇵' },
+  { code:'tr', name:'Turkish', native:'Türkçe', flag:'🇹🇷' },
+  { code:'fa', name:'Persian', native:'فارسی', flag:'🇮🇷' },
+  { code:'ps', name:'Pashto', native:'پښتو', flag:'🇦🇫' },
+  { code:'pa', name:'Punjabi', native:'پنجابی', flag:'🇵🇰' },
+  { code:'sd', name:'Sindhi', native:'سنڌي', flag:'🇵🇰' },
+  { code:'zh', name:'Chinese (Simplified)', native:'中文(简体)', flag:'🇨🇳' },
+  { code:'zh-TW', name:'Chinese (Traditional)', native:'中文(繁體)', flag:'🇹🇼' },
+  { code:'ko', name:'Korean', native:'한국어', flag:'🇰🇷' },
+  { code:'it', name:'Italian', native:'Italiano', flag:'🇮🇹' },
+  { code:'nl', name:'Dutch', native:'Nederlands', flag:'🇳🇱' },
+  { code:'pl', name:'Polish', native:'Polski', flag:'🇵🇱' },
+  { code:'uk', name:'Ukrainian', native:'Українська', flag:'🇺🇦' },
+  { code:'ro', name:'Romanian', native:'Română', flag:'🇷🇴' },
+  { code:'el', name:'Greek', native:'Ελληνικά', flag:'🇬🇷' },
+  { code:'he', name:'Hebrew', native:'עברית', flag:'🇮🇱' },
+  { code:'sv', name:'Swedish', native:'Svenska', flag:'🇸🇪' },
+  { code:'no', name:'Norwegian', native:'Norsk', flag:'🇳🇴' },
+  { code:'da', name:'Danish', native:'Dansk', flag:'🇩🇰' },
+  { code:'fi', name:'Finnish', native:'Suomi', flag:'🇫🇮' },
+  { code:'cs', name:'Czech', native:'Čeština', flag:'🇨🇿' },
+  { code:'sk', name:'Slovak', native:'Slovenčina', flag:'🇸🇰' },
+  { code:'hu', name:'Hungarian', native:'Magyar', flag:'🇭🇺' },
+  { code:'bg', name:'Bulgarian', native:'Български', flag:'🇧🇬' },
+  { code:'sr', name:'Serbian', native:'Српски', flag:'🇷🇸' },
+  { code:'hr', name:'Croatian', native:'Hrvatski', flag:'🇭🇷' },
+  { code:'bs', name:'Bosnian', native:'Bosanski', flag:'🇧🇦' },
+  { code:'sl', name:'Slovenian', native:'Slovenščina', flag:'🇸🇮' },
+  { code:'sq', name:'Albanian', native:'Shqip', flag:'🇦🇱' },
+  { code:'lt', name:'Lithuanian', native:'Lietuvių', flag:'🇱🇹' },
+  { code:'lv', name:'Latvian', native:'Latviešu', flag:'🇱🇻' },
+  { code:'et', name:'Estonian', native:'Eesti', flag:'🇪🇪' },
+  { code:'id', name:'Indonesian', native:'Bahasa Indonesia', flag:'🇮🇩' },
+  { code:'ms', name:'Malay', native:'Bahasa Melayu', flag:'🇲🇾' },
+  { code:'th', name:'Thai', native:'ไทย', flag:'🇹🇭' },
+  { code:'vi', name:'Vietnamese', native:'Tiếng Việt', flag:'🇻🇳' },
+  { code:'tl', name:'Filipino', native:'Filipino', flag:'🇵🇭' },
+  { code:'my', name:'Burmese', native:'မြန်မာ', flag:'🇲🇲' },
+  { code:'km', name:'Khmer', native:'ខ្មែរ', flag:'🇰🇭' },
+  { code:'lo', name:'Lao', native:'ລາວ', flag:'🇱🇦' },
+  { code:'ne', name:'Nepali', native:'नेपाली', flag:'🇳🇵' },
+  { code:'si', name:'Sinhala', native:'සිංහල', flag:'🇱🇰' },
+  { code:'ta', name:'Tamil', native:'தமிழ்', flag:'🇮🇳' },
+  { code:'te', name:'Telugu', native:'తెలుగు', flag:'🇮🇳' },
+  { code:'kn', name:'Kannada', native:'ಕನ್ನಡ', flag:'🇮🇳' },
+  { code:'ml', name:'Malayalam', native:'മലയാളം', flag:'🇮🇳' },
+  { code:'mr', name:'Marathi', native:'मराठी', flag:'🇮🇳' },
+  { code:'gu', name:'Gujarati', native:'ગુજરાતી', flag:'🇮🇳' },
+  { code:'or', name:'Odia', native:'ଓଡ଼ିଆ', flag:'🇮🇳' },
+  { code:'as', name:'Assamese', native:'অসমীয়া', flag:'🇮🇳' },
+  { code:'sw', name:'Swahili', native:'Kiswahili', flag:'🇰🇪' },
+  { code:'am', name:'Amharic', native:'አማርኛ', flag:'🇪🇹' },
+  { code:'so', name:'Somali', native:'Soomaali', flag:'🇸🇴' },
+  { code:'ha', name:'Hausa', native:'Hausa', flag:'🇳🇬' },
+  { code:'yo', name:'Yoruba', native:'Yorùbá', flag:'🇳🇬' },
+  { code:'ig', name:'Igbo', native:'Igbo', flag:'🇳🇬' },
+  { code:'zu', name:'Zulu', native:'isiZulu', flag:'🇿🇦' },
+  { code:'xh', name:'Xhosa', native:'isiXhosa', flag:'🇿🇦' },
+  { code:'af', name:'Afrikaans', native:'Afrikaans', flag:'🇿🇦' },
+  { code:'mg', name:'Malagasy', native:'Malagasy', flag:'🇲🇬' },
+  { code:'rw', name:'Kinyarwanda', native:'Ikinyarwanda', flag:'🇷🇼' },
+  { code:'ny', name:'Chichewa', native:'Chichewa', flag:'🇲🇼' },
+  { code:'ti', name:'Tigrinya', native:'ትግርኛ', flag:'🇪🇷' },
+  { code:'az', name:'Azerbaijani', native:'Azərbaycan', flag:'🇦🇿' },
+  { code:'uz', name:'Uzbek', native:'Oʻzbek', flag:'🇺🇿' },
+  { code:'kk', name:'Kazakh', native:'Қазақ', flag:'🇰🇿' },
+  { code:'ky', name:'Kyrgyz', native:'Кыргызча', flag:'🇰🇬' },
+  { code:'tg', name:'Tajik', native:'Тоҷикӣ', flag:'🇹🇯' },
+  { code:'tk', name:'Turkmen', native:'Türkmen', flag:'🇹🇲' },
+  { code:'mn', name:'Mongolian', native:'Монгол', flag:'🇲🇳' },
+  { code:'ka', name:'Georgian', native:'ქართული', flag:'🇬🇪' },
+  { code:'hy', name:'Armenian', native:'Հայերեն', flag:'🇦🇲' },
+  { code:'ku', name:'Kurdish', native:'Kurdî', flag:'🇮🇶' },
+  { code:'ug', name:'Uyghur', native:'ئۇيغۇرچە', flag:'🇨🇳' },
+  { code:'mi', name:'Maori', native:'Māori', flag:'🇳🇿' },
+  { code:'sm', name:'Samoan', native:'Gagana Sāmoa', flag:'🇼🇸' },
+  { code:'ht', name:'Haitian Creole', native:'Kreyòl Ayisyen', flag:'🇭🇹' },
+  { code:'ca', name:'Catalan', native:'Català', flag:'🏴' },
+  { code:'eu', name:'Basque', native:'Euskara', flag:'🏴' },
+  { code:'gl', name:'Galician', native:'Galego', flag:'🏴' },
+  { code:'is', name:'Icelandic', native:'Íslenska', flag:'🇮🇸' },
+  { code:'ga', name:'Irish', native:'Gaeilge', flag:'🇮🇪' },
+  { code:'cy', name:'Welsh', native:'Cymraeg', flag:'🏴' },
+  { code:'mt', name:'Maltese', native:'Malti', flag:'🇲🇹' },
+  { code:'lb', name:'Luxembourgish', native:'Lëtzebuergesch', flag:'🇱🇺' },
+  { code:'mk', name:'Macedonian', native:'Македонски', flag:'🇲🇰' },
+  { code:'be', name:'Belarusian', native:'Беларуская', flag:'🇧🇾' },
+  { code:'yi', name:'Yiddish', native:'ייִדיש', flag:'🕎' },
+  { code:'jv', name:'Javanese', native:'Basa Jawa', flag:'🇮🇩' }
+];
 
-function setLang(l){
-  currentLang = l;
-  document.documentElement.lang = (l==='ur')?'ur':'en';
-  document.documentElement.dir = (l==='ur')?'rtl':'ltr';
-  document.body.classList.toggle('lang-en', l==='en');
-  document.getElementById('btnUr').classList.toggle('active', l==='ur');
-  document.getElementById('btnEn').classList.toggle('active', l==='en');
+let currentLang = 'ur';
+let currentLangName = 'Urdu';
+
+function langMeta(code){
+  return LANGUAGES.find(l=>l.code===code) || { code, name:code, native:code, flag:'🌐' };
+}
+
+function applyTranslations(){
+  const dict = I18N[currentLang] || I18N.en;
   document.querySelectorAll('[data-i]').forEach(el=>{
     const key = el.getAttribute('data-i');
-    if(I18N[l][key]) el.innerHTML = I18N[l][key];
+    if(dict[key]) el.innerHTML = dict[key];
+    else if(I18N.en[key]) el.innerHTML = I18N.en[key];
+  });
+  document.querySelectorAll('[data-i-ph]').forEach(el=>{
+    const key = el.getAttribute('data-i-ph');
+    if(dict[key]) el.placeholder = dict[key];
+    else if(I18N.en[key]) el.placeholder = I18N.en[key];
   });
   const curLbl = document.getElementById('topicCurrentLbl');
   if(curLbl && typeof selectedTopic !== 'undefined'){
     const key = 'topic' + selectedTopic.charAt(0).toUpperCase() + selectedTopic.slice(1);
-    if(I18N[l][key]) curLbl.textContent = I18N[l][key];
+    if(dict[key]) curLbl.textContent = dict[key];
+    else if(I18N.en[key]) curLbl.textContent = I18N.en[key];
+  }
+  const searchInput = document.getElementById('langSearchInput');
+  renderLangList(searchInput ? searchInput.value : '');
+}
+
+function setLang(l){
+  currentLang = l;
+  const meta = langMeta(l);
+  currentLangName = meta.name;
+  const isRtl = RTL_LANGS.has(l);
+  document.documentElement.lang = l;
+  document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+  document.body.classList.toggle('lang-en', !isRtl);
+  const pickerLbl = document.getElementById('langPickerLabel');
+  if(pickerLbl) pickerLbl.textContent = meta.native;
+  applyTranslations();
+  try{ localStorage.setItem('selectedLang', l); }catch(e){}
+}
+
+function t(key){
+  const dict = I18N[currentLang];
+  if(dict && dict[key]) return dict[key];
+  if(I18N.en[key]) return I18N.en[key];
+  return key;
+}
+
+function openLangModal(){
+  const overlay = document.getElementById('langModalOverlay');
+  if(overlay) overlay.classList.remove('hidden');
+  renderLangList('');
+  const input = document.getElementById('langSearchInput');
+  if(input){ input.value=''; setTimeout(()=>input.focus(), 50); }
+}
+function closeLangModal(){
+  const overlay = document.getElementById('langModalOverlay');
+  if(overlay) overlay.classList.add('hidden');
+}
+function renderLangList(query){
+  const list = document.getElementById('langList');
+  if(!list) return;
+  const q = (query||'').trim().toLowerCase();
+  const filtered = !q ? LANGUAGES : LANGUAGES.filter(l=>
+    l.name.toLowerCase().includes(q) || l.native.toLowerCase().includes(q) || l.code.toLowerCase().includes(q)
+  );
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="lang-empty-note">${escapeHtml(t('langNoResults'))}</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(l => `
+    <div class="lang-item${l.code===currentLang?' selected':''}" onclick="selectLanguage('${l.code}')">
+      <span class="flag">${l.flag}</span>
+      <span class="names"><span class="native">${escapeHtml(l.native)}</span><span class="english">${escapeHtml(l.name)}</span></span>
+      ${l.code===currentLang ? '<span class="check">✓</span>' : ''}
+    </div>
+  `).join('');
+}
+
+async function selectLanguage(code){
+  closeLangModal();
+  if(I18N[code]){
+    setLang(code);
+    return;
+  }
+  setLang(code);
+  const meta = langMeta(code);
+  const cacheKey = 'i18n_cache_' + code;
+  try{
+    const raw = localStorage.getItem(cacheKey);
+    if(raw){
+      const cached = JSON.parse(raw);
+      if(cached && cached.__v === I18N_VERSION && cached.data){
+        I18N[code] = cached.data;
+        setLang(code);
+        return;
+      }
+    }
+  }catch(e){}
+
+  const loadingNote = document.getElementById('langLoadingNote');
+  if(loadingNote) loadingNote.classList.remove('hidden');
+  try{
+    const resp = await fetch('/api/translate-ui', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ lang: code, langName: meta.name, source: I18N.en })
+    });
+    if(!resp.ok) throw new Error('translate-ui request failed: ' + resp.status);
+    const data = await resp.json();
+    if(data && typeof data === 'object' && !data.error){
+      I18N[code] = Object.assign({}, I18N.en, data);
+      try{ localStorage.setItem(cacheKey, JSON.stringify({ __v: I18N_VERSION, data: I18N[code] })); }catch(e){}
+      if(currentLang === code) setLang(code);
+    }
+  }catch(err){
+    console.warn('Language translation failed, showing English strings for', code, err);
+  } finally {
+    if(loadingNote) loadingNote.classList.add('hidden');
   }
 }
 
@@ -1743,7 +2006,8 @@ async function analyzeAura(){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         image: uploadedAuraBase64,
-        language: currentLang
+        language: currentLang,
+        languageName: currentLangName
       }),
       signal: controller.signal
     });
@@ -1837,9 +2101,7 @@ function renderAuraResults(data){
 }
 
 function defaultAuraDisclaimer(){
-  return currentLang==='ur'
-    ? "یہ Aura reading ایک روایتی رنگ تھراپی طرز کا تفریحی تصور ہے۔ اس کی کوئی سائنسی یا طبی بنیاد نہیں، اور یہ کسی حقیقی توانائی کے میدان، جسمانی کمی، صحت یا نفسیاتی کیفیت کی پیمائش نہیں کرتی۔ اسے صرف تفریحی سمجھیں۔"
-    : "This Aura reading is a traditional, folk color-therapy style entertainment concept. It has no scientific or medical basis and does not measure any real energy field, deficiency, health, or psychological state. Please treat it as entertainment only.";
+  return t('auraDisclaimerDefault');
 }
 
 /* ============================================================
@@ -1866,7 +2128,8 @@ async function analyzePalm(){
         image: uploadedBase64,
         hand: selectedHand,
         topic: selectedTopic,
-        language: currentLang
+        language: currentLang,
+        languageName: currentLangName
       }),
       signal: controller.signal
     });
@@ -1967,10 +2230,10 @@ function renderResults(data){
     };
     const linesToShow = lineFilter[topic] || ['heart','head','life','fate'];
     let linesHtml = '';
-    if(linesToShow.includes('heart')) linesHtml += renderLine('dot-heart', currentLang==='ur'?'Heart Line — لکیرِ دل':'Heart Line', data.heart_line);
-    if(linesToShow.includes('head')) linesHtml += renderLine('dot-head', currentLang==='ur'?'Head Line — لکیرِ دماغ':'Head Line', data.head_line);
-    if(linesToShow.includes('life')) linesHtml += renderLine('dot-life', currentLang==='ur'?'Life Line — لکیرِ حیات':'Life Line', data.life_line);
-    if(linesToShow.includes('fate')) linesHtml += renderLine('dot-fate', currentLang==='ur'?'Fate Line — لکیرِ مقدر':'Fate Line', data.fate_line);
+    if(linesToShow.includes('heart')) linesHtml += renderLine('dot-heart', t('lineLabelHeart'), data.heart_line);
+    if(linesToShow.includes('head')) linesHtml += renderLine('dot-head', t('lineLabelHead'), data.head_line);
+    if(linesToShow.includes('life')) linesHtml += renderLine('dot-life', t('lineLabelLife'), data.life_line);
+    if(linesToShow.includes('fate')) linesHtml += renderLine('dot-fate', t('lineLabelFate'), data.fate_line);
     html += `<div class="panel"><h2>🔮 <span>${t('resultTitleLines')}</span></h2>${linesHtml}</div>`;
   }
 
@@ -2197,10 +2460,10 @@ function drawDotMarkers(data){
       let html = '<div class="legend-box">';
       const dotClassMap = { heart_line:'dot-heart', head_line:'dot-head', life_line:'dot-life', fate_line:'dot-fate' };
       const labelMap = {
-        heart_line: currentLang==='ur' ? 'دل کی لکیر' : 'Heart Line',
-        head_line: currentLang==='ur' ? 'دماغ کی لکیر' : 'Head Line',
-        life_line: currentLang==='ur' ? 'حیات کی لکیر' : 'Life Line',
-        fate_line: currentLang==='ur' ? 'مقدر کی لکیر' : 'Fate Line',
+        heart_line: t('lineLabelHeart'),
+        head_line: t('lineLabelHead'),
+        life_line: t('lineLabelLife'),
+        fate_line: t('lineLabelFate'),
       };
       usedLines.forEach(key=>{
         html += `<span class="legend-item"><span class="line-dot ${dotClassMap[key]}"></span>${labelMap[key]}</span>`;
@@ -2212,9 +2475,7 @@ function drawDotMarkers(data){
 }
 
 function defaultDisclaimer(){
-  return currentLang==='ur'
-    ? "یہ reading روایتی پامسٹری کی تشریحات پر مبنی ہے۔ پامسٹری سائنسی طور پر مستقبل کی پیش گوئی، بیماری کی تشخیص، fertility، اولاد کی تعداد یا جنس، موت کی عمر یا مالی کامیابی کی ضمانت دینے کا ثابت شدہ طریقہ نہیں ہے۔ اسے صرف روایتی/تفریحی interpretation سمجھیں۔"
-    : "This reading is based on traditional palmistry interpretations. Palmistry is not a scientifically proven method for predicting the future, diagnosing illness, fertility, the number or gender of children, age of death, or guaranteed financial success. Please treat it as traditional / entertainment interpretation only.";
+  return t('readingDisclaimerDefault');
 }
 
 /* ============================================================
@@ -2343,7 +2604,26 @@ if('serviceWorker' in navigator && window.isSecureContext){
 }
 
 /* init */
-setLang('ur');
+(function initLang(){
+  let saved = null;
+  try{ saved = localStorage.getItem('selectedLang'); }catch(e){}
+  if(saved && saved !== 'ur' && saved !== 'en' && langMeta(saved).code === saved){
+    try{
+      const raw = localStorage.getItem('i18n_cache_' + saved);
+      if(raw){
+        const cached = JSON.parse(raw);
+        if(cached && cached.__v === I18N_VERSION && cached.data){
+          I18N[saved] = cached.data;
+        }
+      }
+    }catch(e){}
+  }
+  if(saved && LANGUAGES.some(l=>l.code===saved)){
+    selectLanguage(saved);
+  } else {
+    setLang('ur');
+  }
+})();
 </script>
 </body>
 </html>

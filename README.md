@@ -160,7 +160,7 @@ http://localhost:3000
 
 ## 8. Customization کے لیے مختصر رہنمائی
 
-- زبان کی ترجمہ شدہ text `index.html` کے اندر `I18N` object میں ہے — نئی زبان شامل کرنے کے لیے وہاں ایک نیا key (مثلاً `ar`) شامل کریں۔
+- ایپ 99 زبانوں کو سپورٹ کرتی ہے (🌐 بٹن سے search کر کے منتخب کریں)۔ اردو اور English کی text مکمل طور پر ہاتھ سے لکھی گئی ہے (`index.html` کے `I18N.ur`/`I18N.en` میں)۔ باقی 97 زبانوں کی UI text پہلی بار منتخب ہونے پر `/api/translate-ui` (OpenAI) خودکار طور پر ترجمہ کر کے browser کے localStorage میں cache کر دیتی ہے۔ نئی زبان `LANGUAGES` array میں شامل کی جا سکتی ہے۔ کف بینی اور Aura Camera کے AI جوابات بھی منتخب کردہ زبان میں براہِ راست GPT-4o سے آتے ہیں (`api/analyze.js`/`api/aura.js` کو `language`/`languageName` بھیجا جاتا ہے)۔
 - رنگ/تھیم CSS کے `:root { --gold: ...; }` والے حصے سے تبدیل کیے جا سکتے ہیں۔
 - AI ماڈل کا رویہ اور JSON فارمیٹ `api/analyze.js` کے اندر `buildSystemPrompt()` فنکشن میں ہے۔
 
