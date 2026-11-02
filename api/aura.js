@@ -34,19 +34,25 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: "Server is not configured (missing API key)." });
     }
 
-    const { image, language } = req.body || {};
+    const { image, language, languageName } = req.body || {};
 
     if (!image || typeof image !== "string" || !image.startsWith("data:image")) {
       return res.status(400).json({ error: "Invalid or missing image data." });
     }
-    const lang = language === "en" ? "en" : "ur";
+    const lang = typeof language === "string" && /^[a-zA-Z-]{2,10}$/.test(language) ? language : "ur";
+    const langName =
+      typeof languageName === "string" && languageName.trim() && languageName.trim().length <= 60
+        ? languageName.trim()
+        : lang === "ur"
+        ? "Urdu"
+        : "English";
 
     const approxBytes = Math.ceil((image.length * 3) / 4);
     if (approxBytes > MAX_IMAGE_BYTES) {
       return res.status(400).json({ error: "Image is too large. Please upload an image under 8 MB." });
     }
 
-    const systemPrompt = buildSystemPrompt(lang);
+    const systemPrompt = buildSystemPrompt(lang, langName);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -74,7 +80,7 @@ module.exports = async function handler(req, res) {
                   text:
                     lang === "ur"
                       ? "منسلک تصویر کا جائزہ لیں اور صرف بیان کردہ JSON فارمیٹ میں جواب دیں۔"
-                      : "Review the attached image and respond ONLY in the specified JSON format.",
+                      : `Review the attached image and respond ONLY in the specified JSON format, writing every text value in natural ${langName}.`,
                 },
                 { type: "image_url", image_url: { url: image, detail: "low" } },
               ],
@@ -143,11 +149,11 @@ async function safeText(resp) {
  * worn), never presented as a measurement of any real energy field, mood,
  * or health condition.
  */
-function buildSystemPrompt(lang) {
+function buildSystemPrompt(lang, langName) {
   const langInstruction =
     lang === "ur"
       ? "Write every human-readable text value in the JSON in clear, natural, warm Urdu — with NO exceptions, including short values. Keep JSON keys in English exactly as specified, and keep the lacking_color.name_en value in English as specified."
-      : "Write every human-readable text field in clear, natural, warm English. Keep JSON keys and the specified enum-like values in English exactly as specified.";
+      : `Write every human-readable text field in clear, natural, warm ${langName} — with NO exceptions, including short values. Do not leave any value in English unless ${langName} IS English. Keep JSON keys in English exactly as specified, and keep the lacking_color.name_en value in English as specified (that field is a fixed internal enum, not a display label).`;
 
   return `You are a friendly "Aura Camera" novelty reader — a traditional color-therapy/aura-photography-booth style entertainment concept, working from a single selfie/portrait photo.
 
