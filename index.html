@@ -327,6 +327,23 @@
   }
   .face-scan-error{padding:16px;}
 
+  /* BMI / MOTAPA CALCULATOR */
+  .bmi-field{margin-bottom:14px;}
+  .bmi-field:last-child{margin-bottom:0;}
+  .bmi-field label{display:block;font-size:13.5px;color:var(--ink-dim);margin-bottom:6px;}
+  .bmi-input{
+    width:100%;background:var(--bg-deep);border:1.5px solid var(--line);border-radius:10px;
+    padding:11px 14px;color:var(--ink);font-size:15px;font-family:inherit;
+  }
+  .bmi-input:focus{outline:none;border-color:var(--gold);}
+  select.bmi-input{appearance:none;-webkit-appearance:none;}
+  .bmi-value-big{font-size:46px;font-weight:700;color:var(--gold-bright);font-family:'Cinzel',serif;text-align:center;line-height:1.1;}
+  .bmi-category-badge{text-align:center;font-size:17px;font-weight:700;margin-top:4px;}
+  .bmi-gauge{position:relative;height:14px;border-radius:999px;margin:18px 0 6px;
+    background:linear-gradient(90deg,#5b9bd9 0%,#5b9bd9 14%,#6cbf6c 14%,#6cbf6c 40%,#e8d18a 40%,#e8d18a 60%,#e0a06b 60%,#e0a06b 80%,#c0392b 80%,#c0392b 100%);
+  }
+  .bmi-gauge-marker{position:absolute;top:-6px;width:4px;height:26px;background:#fff;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,0.6);transform:translateX(-50%);}
+
   /* INSTALL APP */
   .install-header-btn{
     display:none;align-items:center;gap:6px;background:var(--bg-panel);
@@ -422,6 +439,7 @@
 <div class="tabbar">
   <button class="tabbtn active" id="tabReading" onclick="showTab('reading')" data-i="tabReading">کف بینی کروائیں</button>
   <button class="tabbtn" id="tabAura" onclick="showTab('aura')" data-i="tabAura">✨ Aura Camera</button>
+  <button class="tabbtn" id="tabBmi" onclick="showTab('bmi')" data-i="tabBmi">⚖️ موٹاپا کیلکولیٹر</button>
   <button class="tabbtn" id="tabLearn" onclick="showTab('learn')" data-i="tabLearn">علمِ کف شناسی سیکھیں</button>
 </div>
 
@@ -982,6 +1000,66 @@
 
   </div>
 
+  <!-- ============ BMI / MOTAPA CALCULATOR TAB ============ -->
+  <div id="viewBmi" class="hidden">
+
+    <div class="panel">
+      <h2>⚖️ <span data-i="bmiIntroTitle">موٹاپا کیلکولیٹر (BMI)</span></h2>
+      <p data-i="bmiIntroText">اپنی جنس، عمر، قد اور وزن درج کریں اور اپنا BMI (باڈی ماس انڈیکس)، مثالی وزن کی حد، اور روزانہ کیلوری کی ضرورت معلوم کریں۔</p>
+    </div>
+
+    <div class="panel">
+      <h2><span class="num">1</span><span data-i="bmiGenderTitle">جنس منتخب کریں</span></h2>
+      <div class="hand-select">
+        <div class="hand-opt selected" id="bmiGenderMale" onclick="selectBmiGender('male')">
+          <span class="emoji">👨</span>
+          <span class="lbl" data-i="bmiMale">مرد</span>
+        </div>
+        <div class="hand-opt" id="bmiGenderFemale" onclick="selectBmiGender('female')">
+          <span class="emoji">👩</span>
+          <span class="lbl" data-i="bmiFemale">عورت</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="num">2</span><span data-i="bmiDetailsTitle">تفصیلات درج کریں</span></h2>
+      <div class="bmi-field">
+        <label data-i="bmiAgeLabel">عمر (سال)</label>
+        <input type="number" id="bmiAge" class="bmi-input" min="2" max="120" value="25" inputmode="numeric">
+      </div>
+      <div class="bmi-field">
+        <label data-i="bmiHeightLabel">قد (سینٹی میٹر)</label>
+        <input type="number" id="bmiHeight" class="bmi-input" min="50" max="250" value="170" inputmode="numeric">
+      </div>
+      <div class="bmi-field">
+        <label data-i="bmiWeightLabel">وزن (کلوگرام)</label>
+        <input type="number" id="bmiWeight" class="bmi-input" min="10" max="300" value="70" inputmode="numeric">
+      </div>
+      <div class="bmi-field">
+        <label data-i="bmiActivityLabel">روزمرہ جسمانی سرگرمی</label>
+        <select id="bmiActivity" class="bmi-input">
+          <option value="1.2" data-i="bmiActivitySedentary">کم حرکت (زیادہ تر بیٹھ کر کام، ورزش نہیں)</option>
+          <option value="1.375" data-i="bmiActivityLight">ہلکی سرگرمی (ہفتے میں 1-3 دن ورزش)</option>
+          <option value="1.55" selected data-i="bmiActivityModerate">درمیانی سرگرمی (ہفتے میں 3-5 دن ورزش)</option>
+          <option value="1.725" data-i="bmiActivityActive">زیادہ سرگرمی (ہفتے میں 6-7 دن ورزش)</option>
+          <option value="1.9" data-i="bmiActivityVeryActive">بہت زیادہ سرگرمی (سخت جسمانی کام یا روزانہ ورزش)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <button class="btn btn-gold btn-block" onclick="calculateBmi()">
+        <span>⚖️</span><span data-i="bmiCalcBtn">حساب کریں</span>
+      </button>
+    </div>
+
+    <div id="bmiErrorBox"></div>
+
+    <div id="bmiResultsBox"></div>
+
+  </div>
+
 </main>
 
 <footer class="site-footer">
@@ -997,7 +1075,7 @@ const I18N = {
     brandName:"کف بینی", eyebrow:"روایتی کف بینی · AI کی مدد سے",
     heroTitle:"اپنے ہاتھ کی کہانی جانیے",
     heroLead:"اپنی ہتھیلی کی صاف تصویر اپلوڈ کریں اور روایتی علمِ کف شناسی کے مطابق تفصیلی، خوبصورت انداز میں تجزیہ حاصل کریں۔ یہ محض روایتی و تفریحی تشریح ہے، سائنسی پیش گوئی نہیں۔",
-    tabReading:"کف بینی کروائیں", tabAura:"✨ Aura Camera", tabLearn:"علمِ کف شناسی سیکھیں",
+    tabReading:"کف بینی کروائیں", tabAura:"✨ Aura Camera", tabBmi:"⚖️ موٹاپا کیلکولیٹر", tabLearn:"علمِ کف شناسی سیکھیں",
     step1Title:"آپ کیا جاننا چاہتے ہیں؟",
     topicFull:"مکمل تجزیہ", topicMarriage:"شادی / محبت", topicHealth:"صحت کا رجحان",
     topicFate:"قسمت / کیریئر", topicWealth:"مالی معاملات", topicPersonality:"شخصیت",
@@ -1085,13 +1163,43 @@ const I18N = {
     startFaceScanBtn:"اسکین شروع کریں",
     faceScanStatusDetecting:"چہرہ تلاش کیا جا رہا ہے…",
     faceScanStatusHold:"چہرے کو ساکن رکھیں…",
-    faceScanStatusCapturing:"تصویر لی جا رہی ہے…"
+    faceScanStatusCapturing:"تصویر لی جا رہی ہے…",
+    bmiIntroTitle:"موٹاپا کیلکولیٹر (BMI)",
+    bmiIntroText:"اپنی جنس، عمر، قد اور وزن درج کریں اور اپنا BMI (باڈی ماس انڈیکس)، مثالی وزن کی حد، اور روزانہ کیلوری کی ضرورت معلوم کریں۔",
+    bmiGenderTitle:"جنس منتخب کریں", bmiMale:"مرد", bmiFemale:"عورت",
+    bmiDetailsTitle:"تفصیلات درج کریں",
+    bmiAgeLabel:"عمر (سال)", bmiHeightLabel:"قد (سینٹی میٹر)", bmiWeightLabel:"وزن (کلوگرام)",
+    bmiActivityLabel:"روزمرہ جسمانی سرگرمی",
+    bmiActivitySedentary:"کم حرکت (زیادہ تر بیٹھ کر کام، ورزش نہیں)",
+    bmiActivityLight:"ہلکی سرگرمی (ہفتے میں 1-3 دن ورزش)",
+    bmiActivityModerate:"درمیانی سرگرمی (ہفتے میں 3-5 دن ورزش)",
+    bmiActivityActive:"زیادہ سرگرمی (ہفتے میں 6-7 دن ورزش)",
+    bmiActivityVeryActive:"بہت زیادہ سرگرمی (سخت جسمانی کام یا روزانہ ورزش)",
+    bmiCalcBtn:"حساب کریں",
+    bmiErrInvalid:"براہ کرم عمر، قد اور وزن درست طریقے سے درج کریں۔",
+    bmiCat_under:"کم وزن", bmiCat_normal:"نارمل وزن", bmiCat_over:"زیادہ وزن",
+    bmiCat_obese1:"موٹاپا (درجہ 1)", bmiCat_obese2:"موٹاپا (درجہ 2)", bmiCat_obese3:"شدید موٹاپا (درجہ 3)",
+    bmiAdvice_under:"آپ کا وزن اوسط سے کم ہے۔ متوازن غذا اور کیلوریز میں بتدریج اضافہ مددگار ہو سکتا ہے — بہتر رہنمائی کے لیے ڈاکٹر یا ماہرِ غذائیت سے مشورہ کریں۔",
+    bmiAdvice_normal:"آپ کا وزن صحت مند حد میں ہے۔ متوازن غذا اور باقاعدہ ورزش کے ذریعے اسے برقرار رکھیں۔",
+    bmiAdvice_over:"آپ کا وزن اوسط سے کچھ زیادہ ہے۔ غذا میں توازن اور باقاعدہ جسمانی سرگرمی وزن کم کرنے میں مددگار ہو سکتی ہے۔",
+    bmiAdvice_obese1:"آپ کا BMI موٹاپے کی حد میں ہے۔ متوازن غذا، باقاعدہ ورزش، اور ڈاکٹر سے مشورہ تجویز کیا جاتا ہے۔",
+    bmiAdvice_obese2:"آپ کا BMI موٹاپے کے دوسرے درجے میں ہے۔ براہ کرم مناسب رہنمائی کے لیے ڈاکٹر یا ماہرِ غذائیت سے ضرور رابطہ کریں۔",
+    bmiAdvice_obese3:"آپ کا BMI شدید موٹاپے کی حد میں ہے۔ براہ کرم جلد از جلد کسی مستند ڈاکٹر سے مشورہ کریں۔",
+    bmiIdealWeightTitle:"مثالی وزن کی حد",
+    bmiIdealWeightText:"آپ کے قد کے مطابق صحت مند وزن کی حد تقریباً {min} کلوگرام سے {max} کلوگرام کے درمیان ہے۔",
+    bmiCalorieTitle:"روزانہ کیلوری کی ضرورت",
+    bmiBmrLabel:"بنیادی میٹابولک ریٹ (BMR)",
+    bmiTdeeLabel:"برقرار رکھنے کے لیے یومیہ کیلوریز",
+    bmiLoseLabel:"وزن کم کرنے کے لیے (تقریباً)",
+    bmiGainLabel:"وزن بڑھانے کے لیے (تقریباً)",
+    bmiPerDay:"روزانہ",
+    bmiDisclaimer:"یہ کیلکولیٹر صرف عمومی اندازہ فراہم کرتا ہے اور طبی مشورے کا متبادل نہیں۔ صحت سے متعلق فیصلوں کے لیے ہمیشہ مستند ڈاکٹر یا ماہرِ غذائیت سے رجوع کریں۔"
   },
   en: {
     brandName:"Palmistry", eyebrow:"TRADITIONAL PALMISTRY · AI ASSISTED",
     heroTitle:"Discover the Story in Your Hand",
     heroLead:"Upload a clear photo of your palm and get a detailed, beautifully presented reading based on traditional palmistry. This is a traditional / entertainment interpretation, not a scientific prediction.",
-    tabReading:"Get a Reading", tabLearn:"Learn Palmistry",
+    tabReading:"Get a Reading", tabAura:"✨ Aura Camera", tabBmi:"⚖️ BMI Calculator", tabLearn:"Learn Palmistry",
     step1Title:"What would you like to know?",
     topicFull:"Full Reading", topicMarriage:"Marriage / Love", topicHealth:"Health Tendency",
     topicFate:"Fate / Career", topicWealth:"Money / Wealth", topicPersonality:"Personality",
@@ -1179,7 +1287,37 @@ const I18N = {
     startFaceScanBtn:"Start Scan",
     faceScanStatusDetecting:"Looking for your face…",
     faceScanStatusHold:"Hold your face steady…",
-    faceScanStatusCapturing:"Capturing image…"
+    faceScanStatusCapturing:"Capturing image…",
+    bmiIntroTitle:"BMI Calculator",
+    bmiIntroText:"Enter your gender, age, height and weight to find your BMI (Body Mass Index), ideal weight range, and daily calorie needs.",
+    bmiGenderTitle:"Select Gender", bmiMale:"Male", bmiFemale:"Female",
+    bmiDetailsTitle:"Enter Your Details",
+    bmiAgeLabel:"Age (years)", bmiHeightLabel:"Height (cm)", bmiWeightLabel:"Weight (kg)",
+    bmiActivityLabel:"Daily Activity Level",
+    bmiActivitySedentary:"Sedentary (mostly sitting, no exercise)",
+    bmiActivityLight:"Light activity (exercise 1-3 days/week)",
+    bmiActivityModerate:"Moderate activity (exercise 3-5 days/week)",
+    bmiActivityActive:"Active (exercise 6-7 days/week)",
+    bmiActivityVeryActive:"Very active (hard physical job or daily exercise)",
+    bmiCalcBtn:"Calculate",
+    bmiErrInvalid:"Please enter a valid age, height and weight.",
+    bmiCat_under:"Underweight", bmiCat_normal:"Normal Weight", bmiCat_over:"Overweight",
+    bmiCat_obese1:"Obese (Class 1)", bmiCat_obese2:"Obese (Class 2)", bmiCat_obese3:"Severely Obese (Class 3)",
+    bmiAdvice_under:"Your weight is below average. A balanced diet and gradually increasing calories can help — for personalized guidance, consult a doctor or nutritionist.",
+    bmiAdvice_normal:"Your weight is in a healthy range. Keep it up with a balanced diet and regular exercise.",
+    bmiAdvice_over:"Your weight is somewhat above average. A balanced diet and regular physical activity can help bring it down.",
+    bmiAdvice_obese1:"Your BMI falls in the obese range. A balanced diet, regular exercise, and consulting a doctor are recommended.",
+    bmiAdvice_obese2:"Your BMI falls in the second obesity class. Please consult a doctor or nutritionist for proper guidance.",
+    bmiAdvice_obese3:"Your BMI falls in the severely obese range. Please consult a qualified doctor as soon as possible.",
+    bmiIdealWeightTitle:"Ideal Weight Range",
+    bmiIdealWeightText:"A healthy weight range for your height is approximately {min} kg to {max} kg.",
+    bmiCalorieTitle:"Daily Calorie Needs",
+    bmiBmrLabel:"Basal Metabolic Rate (BMR)",
+    bmiTdeeLabel:"Calories to maintain weight",
+    bmiLoseLabel:"To lose weight (approx.)",
+    bmiGainLabel:"To gain weight (approx.)",
+    bmiPerDay:"per day",
+    bmiDisclaimer:"This calculator provides only a general estimate and is not a substitute for medical advice. Always consult a qualified doctor or nutritionist for health decisions."
   }
 };
 /* Labels for values whose JSON key gets shown as a heading/label in the
@@ -1244,9 +1382,11 @@ function t(key){ return I18N[currentLang][key] || key; }
 function showTab(name){
   document.getElementById('viewReading').classList.toggle('hidden', name!=='reading');
   document.getElementById('viewAura').classList.toggle('hidden', name!=='aura');
+  document.getElementById('viewBmi').classList.toggle('hidden', name!=='bmi');
   document.getElementById('viewLearn').classList.toggle('hidden', name!=='learn');
   document.getElementById('tabReading').classList.toggle('active', name==='reading');
   document.getElementById('tabAura').classList.toggle('active', name==='aura');
+  document.getElementById('tabBmi').classList.toggle('active', name==='bmi');
   document.getElementById('tabLearn').classList.toggle('active', name==='learn');
   if(name!=='aura' && typeof stopAuraLiveScan === 'function'){
     stopAuraLiveScan();
@@ -1840,6 +1980,91 @@ function defaultAuraDisclaimer(){
   return currentLang==='ur'
     ? "یہ Aura reading ایک روایتی رنگ تھراپی طرز کا تفریحی تصور ہے۔ اس کی کوئی سائنسی یا طبی بنیاد نہیں، اور یہ کسی حقیقی توانائی کے میدان، جسمانی کمی، صحت یا نفسیاتی کیفیت کی پیمائش نہیں کرتی۔ اسے صرف تفریحی سمجھیں۔"
     : "This Aura reading is a traditional, folk color-therapy style entertainment concept. It has no scientific or medical basis and does not measure any real energy field, deficiency, health, or psychological state. Please treat it as entertainment only.";
+}
+
+/* ============================================================
+   BMI / MOTAPA CALCULATOR
+   ============================================================ */
+let selectedBmiGender = 'male';
+
+function selectBmiGender(g){
+  selectedBmiGender = g;
+  document.getElementById('bmiGenderMale').classList.toggle('selected', g==='male');
+  document.getElementById('bmiGenderFemale').classList.toggle('selected', g==='female');
+}
+
+function showBmiError(msg){
+  document.getElementById('bmiErrorBox').innerHTML =
+    `<div class="alert alert-warn"><span class="ic">⚠️</span><div>${escapeHtml(msg)}</div></div>`;
+}
+function clearBmiError(){
+  document.getElementById('bmiErrorBox').innerHTML = '';
+}
+
+function bmiCategory(bmi){
+  if(bmi < 18.5) return { key:'under', color:'#5b9bd9' };
+  if(bmi < 25) return { key:'normal', color:'#6cbf6c' };
+  if(bmi < 30) return { key:'over', color:'#e8d18a' };
+  if(bmi < 35) return { key:'obese1', color:'#e0a06b' };
+  if(bmi < 40) return { key:'obese2', color:'#e07a6b' };
+  return { key:'obese3', color:'#c0392b' };
+}
+
+function calculateBmi(){
+  clearBmiError();
+  document.getElementById('bmiResultsBox').innerHTML = '';
+
+  const age = parseFloat(document.getElementById('bmiAge').value);
+  const heightCm = parseFloat(document.getElementById('bmiHeight').value);
+  const weightKg = parseFloat(document.getElementById('bmiWeight').value);
+  const activity = parseFloat(document.getElementById('bmiActivity').value);
+
+  if(!age || !heightCm || !weightKg || age <= 0 || heightCm <= 0 || weightKg <= 0){
+    showBmiError(t('bmiErrInvalid'));
+    return;
+  }
+
+  const heightM = heightCm / 100;
+  const bmi = weightKg / (heightM * heightM);
+  const bmr = selectedBmiGender === 'male'
+    ? 10*weightKg + 6.25*heightCm - 5*age + 5
+    : 10*weightKg + 6.25*heightCm - 5*age - 161;
+  const tdee = bmr * activity;
+  const idealMin = 18.5 * heightM * heightM;
+  const idealMax = 24.9 * heightM * heightM;
+
+  renderBmiResults({ bmi, bmr, tdee, idealMin, idealMax });
+}
+
+function renderBmiResults(data){
+  const cat = bmiCategory(data.bmi);
+  const pct = Math.min(100, Math.max(0, ((data.bmi - 15) / (40 - 15)) * 100));
+
+  let html = `<div class="panel">
+    <div class="bmi-value-big">${data.bmi.toFixed(1)}</div>
+    <div class="bmi-category-badge" style="color:${cat.color};">${t('bmiCat_'+cat.key)}</div>
+    <div class="bmi-gauge"><div class="bmi-gauge-marker" style="inset-inline-start:${pct}%;"></div></div>
+    <div class="subcard" style="margin-top:14px;"><p>${escapeHtml(t('bmiAdvice_'+cat.key))}</p></div>
+  </div>`;
+
+  const idealText = t('bmiIdealWeightText')
+    .replace('{min}', data.idealMin.toFixed(1))
+    .replace('{max}', data.idealMax.toFixed(1));
+  html += cardSimple('⚖️', t('bmiIdealWeightTitle'), `<div class="subcard"><p>${escapeHtml(idealText)}</p></div>`);
+
+  const perDay = t('bmiPerDay');
+  html += cardSimple('🔥', t('bmiCalorieTitle'), `
+    <div class="subcard"><p><span class="k">${t('bmiBmrLabel')}:</span> ${Math.round(data.bmr)} kcal/${perDay}</p></div>
+    <div class="subcard"><p><span class="k">${t('bmiTdeeLabel')}:</span> ${Math.round(data.tdee)} kcal/${perDay}</p></div>
+    <div class="subcard"><p><span class="k">${t('bmiLoseLabel')}:</span> ${Math.round(data.tdee - 500)} kcal/${perDay}</p></div>
+    <div class="subcard"><p><span class="k">${t('bmiGainLabel')}:</span> ${Math.round(data.tdee + 500)} kcal/${perDay}</p></div>
+  `);
+
+  html += `<div class="panel disclaimer-box">${escapeHtml(t('bmiDisclaimer'))}</div>`;
+
+  const box = document.getElementById('bmiResultsBox');
+  box.innerHTML = html;
+  box.scrollIntoView({ behavior:'smooth' });
 }
 
 /* ============================================================
