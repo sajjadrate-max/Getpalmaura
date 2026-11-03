@@ -1,6 +1,6 @@
-name: Build PalmAura APK
+name: Build GetPalmAura APK
 
-# APK بنا کر سائٹ کے ساتھ ہی PalmAura.apk کے نام سے رکھتا ہے،
+# APK بنا کر سائٹ کے ساتھ ہی GetPalmAura.apk کے نام سے رکھتا ہے،
 # تاکہ ڈاؤن لوڈ سیدھا getpalmaura.com سے ہو۔ Vercel اس ریپو کے main پر
 # ہر push کے بعد خودکار دوبارہ deploy کر دیتا ہے، اس لیے الگ سے
 # کسی "rebuild" مرحلے کی ضرورت نہیں۔
@@ -52,13 +52,14 @@ jobs:
           PALMAURA_KEYSTORE_PASSWORD: ${{ secrets.PALMAURA_KEYSTORE_PASSWORD }}
         run: |
           gradle --no-daemon assembleRelease
-          cp app/build/outputs/apk/release/app-release.apk ../PalmAura.apk
+          cp app/build/outputs/apk/release/app-release.apk ../GetPalmAura.apk
 
       - name: Commit APK to the site
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add PalmAura.apk
-          git commit -m "Update PalmAura.apk (build ${{ github.run_number }})"
+          git rm --ignore-unmatch -q PalmAura.apk
+          git add GetPalmAura.apk
+          git commit -m "Update GetPalmAura.apk (build ${{ github.run_number }})"
           git pull --rebase origin main
           git push origin HEAD:main
