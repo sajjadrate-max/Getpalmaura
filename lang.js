@@ -138,9 +138,8 @@
     '.site-header .hl-lang{padding:0;width:auto;order:2;}' +
     '#hlLangBtn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:18px;border:1px solid rgba(201,167,105,0.4);background:#141b2c;color:#e8c887;' +
       'font:600 .85rem Inter,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);white-space:nowrap;}' +
-    '#hlLangPanel{display:none;position:absolute;top:calc(100% + 6px);right:10px;width:260px;max-width:calc(100vw - 20px);max-height:60vh;flex-direction:column;' +
+    '#hlLangPanel{display:none;position:absolute;top:calc(100% + 6px);width:260px;max-width:calc(100vw - 20px);max-height:60vh;flex-direction:column;' +
       'background:#141b2c;border:1px solid rgba(201,167,105,0.3);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);overflow:hidden;z-index:9000;}' +
-    '.site-header #hlLangPanel{right:0;}' +
     '#hlLangPanel.open{display:flex;}' +
     '#hlLangSearch{margin:8px;padding:8px 10px;border:1px solid rgba(201,167,105,0.3);border-radius:8px;font:1rem Inter,sans-serif;background:#0d1220;color:#efe9da;}' +
     '#hlLangList{overflow-y:auto;}' +
@@ -191,6 +190,12 @@
 
     var btn = wrap.querySelector('#hlLangBtn'), panel = wrap.querySelector('#hlLangPanel'),
         search = wrap.querySelector('#hlLangSearch'), list = wrap.querySelector('#hlLangList');
+    // The language button ends up on whichever side is the "start" of the nav
+    // row for the page's actual direction (right in RTL, left in LTR) once it
+    // wraps onto its own line — anchor the dropdown to that same side so it
+    // never overflows off the opposite edge of the screen.
+    if(RTL.indexOf(cur) >= 0){ panel.style.right = '0'; panel.style.left = 'auto'; }
+    else{ panel.style.left = '0'; panel.style.right = 'auto'; }
     function render(q){
       q = (q || '').trim().toLowerCase();
       var items = languageList.filter(function(l){ return !q || l.name.toLowerCase().indexOf(q) >= 0 || l.code.indexOf(q) >= 0; });
