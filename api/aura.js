@@ -174,7 +174,7 @@ REMEDIES — HOW TO "COMPLETE" THIS COLOR:
 Give four short, practical, traditional/folk suggestions for boosting that color in daily life — never medical or dietary-supplement advice, just light, traditional color-therapy style ideas:
 - "wear": wearing more of that color (clothing, accessories).
 - "surroundings": bringing that color into one's home/room/workspace (decor, a plant, a cushion, etc).
-- "food": foods that are naturally that color (as a fun color-association idea, not nutrition advice).
+- "food": name 1-2 specific, widely-known fruits, vegetables, grains or spices that are naturally that color — real food names a person would recognize (e.g. Yellow→mango, banana, turmeric; Red→tomato, pomegranate, watermelon; Green→spinach, apple, cucumber; Orange→orange, carrot, papaya), not a vague description. Where it fits naturally, prefer something seasonal or commonly eaten in South Asian/Pakistani cuisine, but keep it a fun color-association idea, never nutrition or dietary advice.
 - "stone": a gemstone/crystal traditionally associated with that color in folklore (e.g. Red→Ruby/Garnet, Green→Emerald/Jade, Blue→Sapphire/Turquoise, Yellow→Citrine, Violet→Amethyst, Pink→Rose Quartz, Orange→Carnelian, Gold→Citrine/Topaz, White→Clear Quartz/Moonstone, Indigo→Lapis Lazuli).
 
 OUTPUT FORMAT:
@@ -191,7 +191,8 @@ Respond with ONLY a single JSON object (no markdown fences, no commentary) match
 
 Field guidance (write every one of these, except when image_quality.status is "poor", as a warm, complete, easy-to-understand sentence of roughly 15-30 words in the target language, never a bare word or label):
 - "why_it_matters": explain, in traditional folklore terms, what having a bit less of this color around traditionally suggests, and why bringing more of it in could feel good.
-- "remedies.wear", "remedies.surroundings", "remedies.food", "remedies.stone": each a short, concrete, friendly suggestion (one sentence) for that specific category, tied to the chosen color.
+- "remedies.wear", "remedies.surroundings", "remedies.stone": each a short, concrete, friendly suggestion (one sentence) for that specific category, tied to the chosen color.
+- "remedies.food": one short, warm sentence naming 1-2 specific real foods of that color (see the FOOD guidance above) — concrete food names, not a generic description.
 - "affirmation": a short, uplifting one-line affirmation/message for the day (a single encouraging sentence, not a list).
 - "disclaimer": always filled, clearly stating (in the target language) that this Aura Camera reading is a traditional/folk color-therapy entertainment concept only, has no scientific or medical basis, is not a real measurement of any energy field or deficiency, and is not a statement about the person's actual health, nutrition, mental state, or psychology.
 

@@ -1757,7 +1757,12 @@ let faceScanRAFId = null;
 let faceScanState = 'idle'; // idle | detecting | holding
 let faceDetectedSince = null;
 let faceCaptureTriggered = false;
+let faceScanTimeoutId = null;
 const FACE_SCAN_HOLD_MS = 900;
+// Safety net: if face detection never confirms a face within this window
+// (slow/blocked CDN, low-end device, poor lighting, etc.) just capture the
+// current frame anyway instead of leaving the user stuck on "searching…".
+const FACE_SCAN_TIMEOUT_MS = 6000;
 
 async function startAuraLiveScan(){
   document.getElementById('faceScanErrorBox').innerHTML = '';
@@ -1797,6 +1802,14 @@ async function startAuraLiveScan(){
   faceCaptureTriggered = false;
   setFaceScanStatusText(t('faceScanStatusDetecting'));
   setFaceScanProgress(0);
+
+  if(faceScanTimeoutId) clearTimeout(faceScanTimeoutId);
+  faceScanTimeoutId = setTimeout(function(){
+    if(faceScanLoopActive && !faceCaptureTriggered){
+      faceCaptureTriggered = true;
+      finishAuraLiveScan();
+    }
+  }, FACE_SCAN_TIMEOUT_MS);
 
   faceScanLoopActive = true;
   faceScanLoop();
@@ -1914,6 +1927,8 @@ function stopAuraLiveScan(){
   faceScanLoopActive = false;
   if(faceScanRAFId) cancelAnimationFrame(faceScanRAFId);
   faceScanRAFId = null;
+  if(faceScanTimeoutId) clearTimeout(faceScanTimeoutId);
+  faceScanTimeoutId = null;
 
   if(faceMediaStream){
     faceMediaStream.getTracks().forEach(tr=>tr.stop());
