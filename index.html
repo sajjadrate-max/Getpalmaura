@@ -493,6 +493,16 @@
   <p class="lead" data-i="heroLead">اپنی ہتھیلی کی صاف تصویر اپلوڈ کریں اور روایتی علمِ کف شناسی کے مطابق تفصیلی، خوبصورت انداز میں تجزیہ حاصل کریں۔ یہ محض روایتی و تفریحی تشریح ہے، سائنسی پیش گوئی نہیں۔</p>
 </section>
 
+<div class="wrap">
+  <div class="panel" id="apkBox" style="border-color:var(--gold);text-align:center;">
+    <h2 style="justify-content:center;" data-i="apkBoxTitle">📱 Android ایپ ڈاؤن لوڈ کریں</h2>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 14px;" data-i="apkBoxDesc">بٹن دبا کر APK ڈاؤن لوڈ کریں، پھر فائل کھول کر انسٹال کریں (فون پوچھے تو "نامعلوم ذرائع سے انسٹال" کی اجازت دیں)۔</p>
+    <a class="btn btn-gold" href="PalmAura.apk" download="PalmAura.apk" type="application/vnd.android.package-archive" style="text-decoration:none;">
+      <span>⬇️</span><span data-i="apkBoxBtn">Android ایپ (APK) ڈاؤن لوڈ کریں</span>
+    </a>
+  </div>
+</div>
+
 <div class="tabbar">
   <button class="tabbtn active" id="tabReading" onclick="showTab('reading')" data-i="tabReading">کف بینی کروائیں</button>
   <button class="tabbtn" id="tabAura" onclick="showTab('aura')" data-i="tabAura">✨ Aura Camera</button>
@@ -1140,6 +1150,9 @@ const I18N = {
     installBannerTitle:"اپنے ہوم اسکرین پر ایپ انسٹال کریں",
     installBannerSub:"تیز رسائی، بغیر براؤزر کے کھولیں",
     installBannerBtn:"Install",
+    apkBoxTitle:"📱 Android ایپ ڈاؤن لوڈ کریں",
+    apkBoxDesc:"بٹن دبا کر APK ڈاؤن لوڈ کریں، پھر فائل کھول کر انسٹال کریں (فون پوچھے تو \"نامعلوم ذرائع سے انسٹال\" کی اجازت دیں)۔",
+    apkBoxBtn:"Android ایپ (APK) ڈاؤن لوڈ کریں",
     iosInstallTitle:"آئی فون پر انسٹال کرنے کا طریقہ",
     iosInstallSteps:"نیچے Share بٹن ⬆️ دبائیں، پھر \"Add to Home Screen\" منتخب کریں۔",
     installedMsg:"ایپ کامیابی سے انسٹال ہو گئی!",
@@ -1251,6 +1264,9 @@ const I18N = {
     installBannerTitle:"Install the app on your home screen",
     installBannerSub:"Faster access, opens without the browser",
     installBannerBtn:"Install",
+    apkBoxTitle:"📱 Download the Android App",
+    apkBoxDesc:"Tap the button to download the APK, then open the file to install it (if your phone asks, allow \"install from unknown sources\").",
+    apkBoxBtn:"Download Android App (APK)",
     iosInstallTitle:"How to install on iPhone",
     iosInstallSteps:"Tap the Share button ⬆️ below, then choose \"Add to Home Screen\".",
     installedMsg:"App installed successfully!",
@@ -2572,6 +2588,16 @@ function isRunningStandalone(){
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
+// Android WebView ایپ (PalmAura.apk) کے اندر یہ خود "Android ایپ ڈاؤن لوڈ کریں"
+// والا ڈبہ دکھانے کا کوئی مطلب نہیں — چھپا دیں
+function hideApkBoxIfInApp(){
+  const isWebView = /; wv\)/.test(navigator.userAgent);
+  if(isWebView || isRunningStandalone()){
+    const box = document.getElementById('apkBox');
+    if(box) box.style.display = 'none';
+  }
+}
+
 function isIOS(){
   return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 }
@@ -2648,6 +2674,7 @@ if('serviceWorker' in navigator && window.isSecureContext){
 }
 
 /* init */
+hideApkBoxIfInApp();
 (function initLang(){
   let saved = null;
   try{ saved = localStorage.getItem('selectedLang'); }catch(e){}
