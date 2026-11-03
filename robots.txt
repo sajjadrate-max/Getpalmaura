@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://my-palmistry.vercel.app/sitemap.xml
+Sitemap: https://getpalmaura.com/sitemap.xml
