@@ -572,7 +572,7 @@
         <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
           <span class="icon">📷</span>
           <div data-i="uploadHint1">تصویر منتخب کرنے کے لیے یہاں دبائیں</div>
-          <div class="hint" data-i="uploadHint2">صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے</div>
+          <div class="hint" id="uploadHint2">صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے</div>
         </div>
         <div class="upload-actions">
           <button class="btn btn-outline btn-block" onclick="takeHandPhoto()">
@@ -1083,6 +1083,17 @@ const I18N = {
     topicTravel:"سفر", topicChildren:"اولاد", topicHandFingers:"ہاتھ اور انگلیوں کی ساخت",
     topicMarks:"خاص نشانات", topicMounts:"Mounts (ابھار)",
     topicNote:"جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔",
+    photoHintFull:"صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے",
+    photoHintMarriage:"ہتھیلی کا وہ کنارہ جو چھوٹی انگلی کے نیچے ہے صاف نظر آئے — وہاں Marriage Lines ہوتی ہیں",
+    photoHintHealth:"ہتھیلی کا درمیانی اور نچلا حصہ صاف نظر آئے تاکہ لکیرِ حیات اور صحت کی لکیر واضح ہوں",
+    photoHintFate:"کلائی سے درمیانی انگلی تک ہتھیلی کا درمیانی حصہ صاف نظر آئے تاکہ لکیرِ مقدر واضح ہو",
+    photoHintWealth:"انگوٹھی اور چھوٹی انگلی کے نیچے کا حصہ صاف نظر آئے",
+    photoHintPersonality:"پوری ہتھیلی، انگلیاں اور انگوٹھا صاف اور واضح نظر آنے چاہئیں",
+    photoHintTravel:"ہتھیلی کا کنارہ (چھوٹی انگلی کی طرف، کلائی کے قریب) صاف نظر آئے",
+    photoHintChildren:"چھوٹی انگلی کے نیچے والا حصہ صاف نظر آئے",
+    photoHintHandFingers:"تمام پانچوں انگلیاں اور انگوٹھا مکمل اور صاف نظر آنے چاہئیں",
+    photoHintMarks:"پوری ہتھیلی قریب سے، اچھی روشنی میں صاف نظر آئے",
+    photoHintMounts:"ہتھیلی کا گوشت دار حصہ (انگوٹھے کے نیچے اور کنارے) صاف نظر آئے",
     step2TitleHand:"ہاتھ منتخب کریں", rightHand:"دایاں ہاتھ", leftHand:"بایاں ہاتھ",
     step2Title:"ہتھیلی کی تصویر دیں",
     uploadHint1:"تصویر منتخب کرنے کے لیے یہاں دبائیں",
@@ -1198,6 +1209,17 @@ const I18N = {
     topicTravel:"Travel", topicChildren:"Children", topicHandFingers:"Hand & Finger Shape",
     topicMarks:"Special Marks", topicMounts:"Mounts",
     topicNote:"Whichever topic you choose, the result will focus in detail only on that.",
+    photoHintFull:"In good light, your whole palm should be clearly visible",
+    photoHintMarriage:"Keep the edge of your palm under the little finger clear — that's where Marriage Lines are",
+    photoHintHealth:"Keep the middle and lower part of your palm clear so the Life Line and Health Line are visible",
+    photoHintFate:"Keep the middle of your palm, from wrist to middle finger, clearly visible for the Fate Line",
+    photoHintWealth:"Keep the area under your ring and little fingers clearly visible",
+    photoHintPersonality:"Your whole palm, fingers, and thumb should be clear and visible",
+    photoHintTravel:"Keep the edge of your palm (toward the little finger, near the wrist) clearly visible",
+    photoHintChildren:"Keep the area just under your little finger clearly visible",
+    photoHintHandFingers:"All five fingers and the thumb should be fully and clearly visible",
+    photoHintMarks:"Keep your whole palm clearly visible, up close, in good light",
+    photoHintMounts:"Keep the fleshy parts of your palm (under the thumb and along the edges) clearly visible",
     step2TitleHand:"Select Your Hand", rightHand:"Right Hand", leftHand:"Left Hand",
     step2Title:"Provide a Palm Photo",
     uploadHint1:"Tap here to choose a photo",
@@ -1444,6 +1466,7 @@ function applyTranslations(){
     if(dict[key]) curLbl.textContent = dict[key];
     else if(I18N.en[key]) curLbl.textContent = I18N.en[key];
   }
+  if(typeof updateUploadHint === 'function') updateUploadHint();
   const searchInput = document.getElementById('langSearchInput');
   renderLangList(searchInput ? searchInput.value : '');
 }
@@ -1582,6 +1605,21 @@ function selectTopic(topic){
   // collapse the grid back after a choice is made
   document.getElementById('topicGridWrap').classList.add('hidden');
   document.getElementById('topicTriangle').textContent = '▶';
+  updateUploadHint();
+}
+
+/**
+ * Different topics care about different parts of the palm (e.g.
+ * Marriage Lines sit at the edge under the little finger, Mounts
+ * need the fleshy parts clear), so once a topic is picked, tell the
+ * user specifically what to keep clear in their photo instead of
+ * just a generic "whole palm" hint.
+ */
+function updateUploadHint(){
+  const el = document.getElementById('uploadHint2');
+  if(!el) return;
+  const key = 'photoHint' + selectedTopic.charAt(0).toUpperCase() + selectedTopic.slice(1);
+  el.textContent = t(key);
 }
 
 /* ============================================================
