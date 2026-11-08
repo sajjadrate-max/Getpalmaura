@@ -441,7 +441,7 @@
 <header class="top">
   <div class="brand">
     <div class="brand-mark">✋</div>
-    <div class="brand-name" data-i="brandName">GetPalmAura — کف بینی</div>
+    <div class="brand-name" data-i="brandName">GetPalmAura</div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button class="lang-picker-btn" id="langPickerBtn" onclick="openLangModal()">
@@ -451,7 +451,6 @@
 </header>
 
 <section class="hero wrap">
-  <div class="eyebrow" data-i="eyebrow">TRADITIONAL PALMISTRY · AI ASSISTED</div>
   <h1 data-i="heroTitle">اپنے ہاتھ کی کہانی جانیے</h1>
   <p class="lead" data-i="heroLead">اپنی ہتھیلی کی صاف تصویر اپلوڈ کریں اور روایتی علمِ کف شناسی کے مطابق تفصیلی، خوبصورت انداز میں تجزیہ حاصل کریں۔ یہ محض روایتی و تفریحی تشریح ہے، سائنسی پیش گوئی نہیں۔</p>
   <button class="share-btn" id="shareBtn" onclick="shareApp()">
@@ -472,7 +471,6 @@
 <div class="tabbar">
   <button class="tabbtn active" id="tabReading" onclick="showTab('reading')" data-i="tabReading">کف بینی کروائیں</button>
   <button class="tabbtn" id="tabAura" onclick="showTab('aura')" data-i="tabAura">✨ Aura Camera</button>
-  <button class="tabbtn" id="tabLearn" onclick="showTab('learn')" data-i="tabLearn">علمِ کف شناسی سیکھیں</button>
 </div>
 
 <main class="wrap">
@@ -599,348 +597,6 @@
 
   </div>
 
-  <!-- ============ LEARN TAB ============ -->
-  <div id="viewLearn" class="hidden">
-    <div class="panel">
-      <h2>🖐️ <span data-i="learnLinesTitle">اہم لکیریں</span></h2>
-
-      <div class="ref-diagram-wrap">
-        <svg viewBox="0 0 480 560" xmlns="http://www.w3.org/2000/svg" class="ref-diagram-svg">
-          <!-- Palm -->
-          <polygon points="150,340 330,340 350,540 130,540" fill="none" stroke="#efe9da" stroke-width="2" opacity="0.6"/>
-          <!-- Fingers -->
-          <rect x="160" y="185" width="38" height="165" rx="18" fill="none" stroke="#efe9da" stroke-width="2" opacity="0.6"/>
-          <rect x="208" y="150" width="38" height="200" rx="18" fill="none" stroke="#efe9da" stroke-width="2" opacity="0.6"/>
-          <rect x="256" y="160" width="38" height="190" rx="18" fill="none" stroke="#efe9da" stroke-width="2" opacity="0.6"/>
-          <rect x="304" y="190" width="34" height="160" rx="17" fill="none" stroke="#efe9da" stroke-width="2" opacity="0.6"/>
-          <!-- Thumb -->
-          <rect x="75" y="300" width="75" height="70" rx="24" fill="none" stroke="#efe9da" stroke-width="2" opacity="0.6"/>
-
-          <!-- Heart Line -->
-          <path d="M160,365 C200,352 260,355 320,378" fill="none" stroke="#e05c52" stroke-width="5" stroke-linecap="round"/>
-          <!-- Head Line -->
-          <path d="M160,398 C215,412 275,428 315,442" fill="none" stroke="#4f8fd9" stroke-width="5" stroke-linecap="round"/>
-          <!-- Life Line -->
-          <path d="M160,365 C142,400 137,455 148,515" fill="none" stroke="#4fbf5e" stroke-width="5" stroke-linecap="round"/>
-          <!-- Fate Line -->
-          <path d="M240,520 C237,470 234,415 232,352" fill="none" stroke="#e0c341" stroke-width="5" stroke-linecap="round"/>
-
-          <!-- Labels -->
-          <text x="330" y="382" fill="#e05c52" font-size="20" font-family="Noto Nastaliq Urdu" text-anchor="start">لکیرِ دل</text>
-          <text x="322" y="448" fill="#4f8fd9" font-size="20" font-family="Noto Nastaliq Urdu" text-anchor="start">لکیرِ دماغ</text>
-          <text x="80" y="535" fill="#4fbf5e" font-size="20" font-family="Noto Nastaliq Urdu" text-anchor="start">لکیرِ حیات</text>
-          <text x="195" y="552" fill="#e0c341" font-size="20" font-family="Noto Nastaliq Urdu" text-anchor="start">لکیرِ مقدر</text>
-        </svg>
-        <p class="ref-diagram-note" data-i="refDiagramNote">یہ ایک عمومی رہنما خاکہ ہے — ہر ہاتھ پر لکیریں تقریباً انہی جگہوں پر ہوتی ہیں، اسی لیے یہ آپ کے اپنے ہاتھ پر یہ لکیریں پہچاننے میں مدد دے گا۔</p>
-      </div>
-
-      <details class="learn" open>
-        <summary><span class="line-dot dot-heart"></span><span data-i="heartLineName">Heart Line — لکیرِ دل</span></summary>
-        <p data-i="heartLineDesc">یہ لکیر ہتھیلی کے اوپری حصے میں، انگلیوں کے بالکل نیچے، چھنگلیا کی طرف سے شروع ہو کر شہادت کی انگلی کی طرف جاتی ہے۔ روایتی طور پر یہ جذبات، محبت اور تعلقات کی نوعیت ظاہر کرتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary><span class="line-dot dot-head"></span><span data-i="headLineName">Head Line — لکیرِ دماغ</span></summary>
-        <p data-i="headLineDesc">یہ لکیر ہتھیلی کے وسط میں، انگوٹھے اور شہادت کی انگلی کے درمیان سے شروع ہو کر ہتھیلی کے دوسری طرف جاتی ہے۔ روایتی طور پر یہ سوچ، فیصلہ سازی اور ذہنی رجحان کی عکاسی کرتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary><span class="line-dot dot-life"></span><span data-i="lifeLineName">Life Line — لکیرِ حیات</span></summary>
-        <p data-i="lifeLineDesc">یہ لکیر انگوٹھے کے گرد، کلائی کی طرف مڑتی ہوئی نظر آتی ہے۔ روایتی طور پر اسے توانائی، جسمانی رجحان اور زندگی کے اتار چڑھاؤ سے جوڑا جاتا ہے — یہ عمر کی پیشگوئی نہیں کرتی۔</p>
-      </details>
-      <details class="learn">
-        <summary><span class="line-dot dot-fate"></span><span data-i="fateLineName">Fate Line — لکیرِ مقدر</span></summary>
-        <p data-i="fateLineDesc">یہ لکیر عموماً کلائی سے شروع ہو کر ہتھیلی کے وسط سے گزرتے ہوئے درمیانی انگلی کی طرف جاتی ہے۔ ہر ہاتھ پر یہ واضح نہیں ہوتی۔ روایتی طور پر اسے کیریئر اور زندگی کی سمت سے جوڑا جاتا ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>⛰️ <span data-i="learnMountsTitle">سات Mounts (ابھار)</span></h2>
-      <details class="learn">
-        <summary data-i="mountJupiterName">Mount of Jupiter</summary>
-        <p data-i="mountJupiterDesc">شہادت کی انگلی کے نیچے واقع ہے۔ روایتی طور پر قائدانہ صلاحیت اور خود اعتمادی سے منسلک۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mountSaturnName">Mount of Saturn</summary>
-        <p data-i="mountSaturnDesc">درمیانی انگلی کے نیچے واقع ہے۔ روایتی طور پر سنجیدگی اور ذمہ داری سے منسلک۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mountApolloName">Mount of Apollo / Sun</summary>
-        <p data-i="mountApolloDesc">انگوٹھی والی انگلی کے نیچے واقع ہے۔ روایتی طور پر تخلیقی صلاحیت اور شہرت کے رجحان سے منسلک۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mountMercuryName">Mount of Mercury</summary>
-        <p data-i="mountMercuryDesc">چھنگلیا کے نیچے واقع ہے۔ روایتی طور پر بات چیت اور کاروباری ذہانت سے منسلک۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mountVenusName">Mount of Venus</summary>
-        <p data-i="mountVenusDesc">انگوٹھے کی جڑ کے گرد، Life Line کے اندر واقع ہے۔ روایتی طور پر محبت، گرمجوشی اور خاندانی لگاؤ سے منسلک۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mountMoonName">Mount of Moon / Luna</summary>
-        <p data-i="mountMoonDesc">ہتھیلی کے نچلے، کلائی کے قریب والے حصے میں، چھنگلیا کی سمت واقع ہے۔ روایتی طور پر تخیل اور حساسیت سے منسلک۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mountMarsName">Upper &amp; Lower Mars, Plain of Mars</summary>
-        <p data-i="mountMarsDesc">ہتھیلی کے کناروں اور وسط میں واقع چھوٹے ابھار۔ روایتی طور پر ہمت، برداشت اور مزاحمت کی صلاحیت سے منسلک۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>✌️ <span data-i="learnFingersTitle">انگلیوں کے روایتی معنی</span></h2>
-      <details class="learn">
-        <summary data-i="fingerThumbName">انگوٹھا (Thumb)</summary>
-        <p data-i="fingerThumbDesc">قوتِ ارادی اور منطق کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="fingerIndexName">شہادت کی انگلی (Jupiter)</summary>
-        <p data-i="fingerIndexDesc">قیادت، عزائم اور خود اعتمادی سے جوڑی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="fingerMiddleName">درمیانی انگلی (Saturn)</summary>
-        <p data-i="fingerMiddleDesc">ذمہ داری، نظم و ضبط اور سنجیدگی سے جوڑی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="fingerRingName">انگوٹھی والی انگلی (Apollo/Sun)</summary>
-        <p data-i="fingerRingDesc">تخلیقی صلاحیت، فن اور اظہار سے جوڑی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="fingerLittleName">چھنگلیا (Mercury)</summary>
-        <p data-i="fingerLittleDesc">بات چیت، ذہانت اور کاروباری سوجھ بوجھ سے جوڑی جاتی ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>✳️ <span data-i="learnMarksTitle">خاص نشانات کے روایتی معنی</span></h2>
-      <details class="learn">
-        <summary data-i="markStarName">★ Star</summary>
-        <p data-i="markStarDesc">روایتی طور پر اچانک، نمایاں اثر کی علامت سمجھا جاتا ہے، مثبت یا منفی — سیاق پر منحصر۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markIslandName">Island</summary>
-        <p data-i="markIslandDesc">روایتی طور پر کسی دور یا مرحلے میں الجھن یا کمزوری کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markCrossName">✕ Cross</summary>
-        <p data-i="markCrossDesc">روایتی طور پر رکاوٹ یا اہم موڑ کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markSquareName">□ Square</summary>
-        <p data-i="markSquareDesc">روایتی طور پر حفاظت یا کسی مشکل وقت سے محفوظ نکلنے کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markTriangleName">△ Triangle</summary>
-        <p data-i="markTriangleDesc">روایتی طور پر عقل اور مہارت کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markCircleName">○ Circle</summary>
-        <p data-i="markCircleDesc">روایتی طور پر شہرت یا کامیابی کی علامت سمجھا جاتا ہے، خاص طور پر جب کسی مثبت لکیر کے ساتھ ہو۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markDotName">● Dot</summary>
-        <p data-i="markDotDesc">روایتی طور پر کسی مختصر، اچانک واقعے یا جھٹکے کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="markGrilleName">▦ Grille</summary>
-        <p data-i="markGrilleDesc">روایتی طور پر الجھن، بکھری توجہ یا اندرونی دباؤ کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>✌️ <span data-i="learnFingerShapesTitle">انگلیوں کی شکلیں</span></h2>
-      <details class="learn">
-        <summary data-i="shapeTaperedName">نوکیلا سرا (Tapered)</summary>
-        <p data-i="shapeTaperedDesc">روایتی طور پر حساسیت، فنکارانہ ذوق اور نرم مزاجی سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="shapeSquareName">چوکور (Square)</summary>
-        <p data-i="shapeSquareDesc">روایتی طور پر عملی پن، نظم و ضبط اور حقیقت پسندی سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="shapeSpatulateName">پھچا نما (Spatulate)</summary>
-        <p data-i="shapeSpatulateDesc">روایتی طور پر توانائی، عملی جدت اور بے چینی سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="shapeKnottedName">گرہ دار جوڑ (Knotted)</summary>
-        <p data-i="shapeKnottedDesc">روایتی طور پر تجزیاتی سوچ اور تفصیل پر توجہ سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="shapePointedName">تیز نوک (Pointed)</summary>
-        <p data-i="shapePointedDesc">روایتی طور پر تخیل، جذباتیت اور خوابیدہ طبیعت سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="phalanxTitle">انگلیوں کے تین حصے (Phalanges)</summary>
-        <p data-i="phalanxDesc">ہر انگلی تین حصوں پر مشتمل ہوتی ہے: اوپری حصہ (نوک کی طرف) روایتی طور پر روحانیت/سوچ سے، درمیانی حصہ عملی صلاحیت سے، اور بنیادی حصہ (ہتھیلی کے قریب) مادی رجحان اور جسمانی توانائی سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="fingerGapsTitle">انگلیوں کے درمیان فاصلہ</summary>
-        <p data-i="fingerGapsDesc">جب ہاتھ کھلا ہو تو انگلیوں کے درمیان زیادہ فاصلہ روایتی طور پر آزاد خیالی اور کھلے پن سے جوڑا جاتا ہے، عام فاصلہ متوازن طبیعت سے، اور بہت کم/کوئی فاصلہ نہ ہونا احتیاط پسندی اور ذمہ داری کے احساس سے جوڑا جاتا ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>👍 <span data-i="learnThumbTitle">انگوٹھے کی تفصیل</span></h2>
-      <details class="learn">
-        <summary data-i="thumbWillName">قوتِ ارادی (Will Power)</summary>
-        <p data-i="thumbWillDesc">انگوٹھے کا اوپری حصہ (نوک کی طرف) روایتی طور پر ارادے کی مضبوطی ظاہر کرتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="thumbLogicName">منطق (Logic)</summary>
-        <p data-i="thumbLogicDesc">انگوٹھے کا درمیانی حصہ روایتی طور پر سوچ اور استدلال کی صلاحیت سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="thumbFlexName">انگوٹھے کی لچک</summary>
-        <p data-i="thumbFlexDesc">لچکدار انگوٹھا روایتی طور پر مطابقت پذیری اور کھلے ذہن سے، جبکہ سخت انگوٹھا مضبوط موقف اور ثابت قدمی سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="thumbAngleName">انگوٹھے کا زاویہ</summary>
-        <p data-i="thumbAngleDesc">زیادہ کھلا زاویہ روایتی طور پر فراخ دلی اور سخاوت سے، جبکہ بند زاویہ محتاط اور محفوظ طبیعت سے جوڑا جاتا ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>✋ <span data-i="learnHandTypesTitle">ہاتھ کی اقسام</span></h2>
-      <details class="learn">
-        <summary data-i="handEarthName">زمینی ہاتھ (Earth Hand)</summary>
-        <p data-i="handEarthDesc">چوکور ہتھیلی، چھوٹی انگلیاں — روایتی طور پر عملی، محنتی اور مستحکم طبیعت سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="handAirName">ہوائی ہاتھ (Air Hand)</summary>
-        <p data-i="handAirDesc">چوکور ہتھیلی، لمبی انگلیاں — روایتی طور پر ذہانت، تجسس اور بات چیت کی مہارت سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="handFireName">آتشی ہاتھ (Fire Hand)</summary>
-        <p data-i="handFireDesc">لمبی ہتھیلی، چھوٹی انگلیاں — روایتی طور پر جوش، توانائی اور قائدانہ جذبے سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="handWaterName">آبی ہاتھ (Water Hand)</summary>
-        <p data-i="handWaterDesc">لمبی ہتھیلی، لمبی انگلیاں — روایتی طور پر حساسیت، تخیل اور جذباتی گہرائی سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="handTextureTitle">ہاتھ کی کیفیت (نرمی/سختی)</summary>
-        <p data-i="handTextureDesc">نرم ہاتھ روایتی طور پر حساس فطرت سے، معمولی/متوازن ہاتھ متوازن مزاج سے، اور سخت ہاتھ محنت پسند اور مضبوط عزم سے جوڑا جاتا ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>💅 <span data-i="learnNailsTitle">ناخنوں کے روایتی معنی</span></h2>
-      <details class="learn">
-        <summary data-i="nailNormalName">معمولی ناخن</summary>
-        <p data-i="nailNormalDesc">روایتی طور پر متوازن صحت اور مزاج کی علامت سمجھا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="nailLongName">لمبے ناخن</summary>
-        <p data-i="nailLongDesc">روایتی طور پر حساس اور فنکارانہ طبیعت سے جوڑے جاتے ہیں۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="nailShortName">چھوٹے ناخن</summary>
-        <p data-i="nailShortDesc">روایتی طور پر تنقیدی سوچ اور تفصیل پر توجہ سے جوڑے جاتے ہیں۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="nailWideName">چوڑے ناخن</summary>
-        <p data-i="nailWideDesc">روایتی طور پر صاف گو اور قدرے جلد رد عمل دینے والی طبیعت سے جوڑے جاتے ہیں۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="nailNarrowName">تنگ/باریک ناخن</summary>
-        <p data-i="nailNarrowDesc">روایتی طور پر محتاط اور کسی حد تک محفوظ طبیعت سے جوڑے جاتے ہیں۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>〰️ <span data-i="learnLineTypesTitle">لکیروں کی اقسام (شکل کے اعتبار سے)</span></h2>
-      <details class="learn">
-        <summary data-i="lineTypeDeepName">گہری لکیر (Deep)</summary>
-        <p data-i="lineTypeDeepDesc">روایتی طور پر اس شعبے میں مضبوط اور واضح اثر کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeLightName">ہلکی لکیر (Light)</summary>
-        <p data-i="lineTypeLightDesc">روایتی طور پر نرم یا کم واضح رجحان کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeStraightName">سیدھی لکیر (Straight)</summary>
-        <p data-i="lineTypeStraightDesc">روایتی طور پر واضح، مستحکم رجحان کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeCurvedName">خم دار لکیر (Curved)</summary>
-        <p data-i="lineTypeCurvedDesc">روایتی طور پر لچک دار اور جذباتی رجحان کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeForkName">دوہرا سرا (Fork)</summary>
-        <p data-i="lineTypeForkDesc">روایتی طور پر انتخاب، دوہرے رجحان یا صلاحیتوں میں تنوع کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeChainName">زنجیر نما (Chain)</summary>
-        <p data-i="lineTypeChainDesc">روایتی طور پر کسی دور میں الجھن یا غیر یقینی کیفیت کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeIslandName">Island</summary>
-        <p data-i="lineTypeIslandDesc">روایتی طور پر کمزوری یا کسی مرحلے میں رکاوٹ کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="lineTypeBreakName">ٹوٹ (Break)</summary>
-        <p data-i="lineTypeBreakDesc">روایتی طور پر اچانک تبدیلی یا وقفے کی علامت سمجھی جاتی ہے۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>☀️ <span data-i="learnMoreLinesTitle">مزید اہم لکیریں</span></h2>
-      <details class="learn">
-        <summary data-i="sunLineName2">Sun Line — لکیرِ شمس</summary>
-        <p data-i="sunLineDesc2">انگوٹھی والی انگلی کی طرف عمودی، روایتی طور پر شہرت، کامیابی اور عزت سے جوڑی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="mercuryLineName2">Mercury/Health Line — لکیرِ صحت</summary>
-        <p data-i="mercuryLineDesc2">چھنگلیا کی طرف سے ہتھیلی میں آتی ہوئی، روایتی طور پر مواصلات اور کاروباری سوجھ بوجھ سے جوڑی جاتی ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="girdleVenusName">Girdle of Venus — حلقۂ زہرہ</summary>
-        <p data-i="girdleVenusDesc">دل کی لکیر کے اوپر، درمیانی اور انگوٹھی والی انگلی کے نیچے نیم دائرہ — روایتی طور پر شدید جذباتیت اور حساسیت سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="bracelettName">Bracelet/Rascette Lines — کلائی کی لکیریں</summary>
-        <p data-i="braceletDesc">کلائی پر افقی لکیریں — روایتی طور پر عمومی توانائی اور زندگی کے مختلف ادوار سے جوڑی جاتی ہیں۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>💍 <span data-i="learnMarriageChildTitle">شادی اور اولاد کی لکیریں</span></h2>
-      <details class="learn">
-        <summary data-i="marriageLinesName2">شادی کی لکیریں (Marriage Lines)</summary>
-        <p data-i="marriageLinesDesc2">چھنگلیا کے نیچے، دل کی لکیر کے اوپر چھوٹی افقی لکیریں — روایتی طور پر تعلقات کی نوعیت اور اہمیت سے جوڑی جاتی ہیں۔ ان کی تعداد رشتوں کی یقینی تعداد نہیں بتاتی۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="childrenLinesName2">اولاد کی لکیریں (Children Lines)</summary>
-        <p data-i="childrenLinesDesc2">شادی کی لکیروں کے قریب چھوٹی عمودی لکیریں — روایتی طور پر خاندان سے جوڑی جاتی ہیں۔ یہ اولاد کی یقینی تعداد یا جنس نہیں بتاتیں — پامسٹری اس کا سائنسی تعین نہیں کر سکتی۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>✈️ <span data-i="learnTravelTitle">سفر کی علامات</span></h2>
-      <details class="learn">
-        <summary data-i="travelLinesName2">Travel Lines — سفر کی لکیریں</summary>
-        <p data-i="travelLinesDesc2">ہتھیلی کے کنارے سے اندر کی طرف آتی چھوٹی لکیریں — روایتی طور پر سفر کے رجحان یا اہم دوری کے سفروں سے جوڑی جاتی ہیں۔</p>
-      </details>
-    </div>
-
-    <div class="panel">
-      <h2>🔗 <span data-i="learnInteractionsTitle">لکیروں کا آپس میں تعلق</span></h2>
-      <details class="learn">
-        <summary data-i="interactHeartHeadName">دل اور دماغ کی لکیر ملی ہوئی</summary>
-        <p data-i="interactHeartHeadDesc">روایتی طور پر جذبات اور سوچ کے ملاپ، اور فیصلوں میں احتیاط سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="interactSeparateName">دل اور دماغ کی لکیر الگ الگ</summary>
-        <p data-i="interactSeparateDesc">روایتی طور پر آزاد خیالی اور جذبات و سوچ میں واضح فرق سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="interactCloseName">دماغ اور حیات کی لکیر قریب/جڑی ہوئی</summary>
-        <p data-i="interactCloseDesc">روایتی طور پر محتاط طبیعت اور سوچ سمجھ کر قدم اٹھانے سے جوڑا جاتا ہے۔</p>
-      </details>
-      <details class="learn">
-        <summary data-i="interactWideName">دماغ اور حیات کی لکیر کے درمیان فاصلہ</summary>
-        <p data-i="interactWideDesc">روایتی طور پر خود اعتمادی اور آزادانہ فیصلہ سازی سے جوڑا جاتا ہے۔</p>
-      </details>
-    </div>
-  </div>
-
   <!-- ============ AURA CAMERA TAB ============ -->
   <div id="viewAura" class="hidden">
 
@@ -1059,10 +715,10 @@
    ============================================================ */
 const I18N = {
   ur: {
-    brandName:"GetPalmAura — کف بینی", eyebrow:"روایتی کف بینی · AI کی مدد سے",
+    brandName:"GetPalmAura",
     heroTitle:"اپنے ہاتھ کی کہانی جانیے",
     heroLead:"اپنی ہتھیلی کی صاف تصویر اپلوڈ کریں اور روایتی علمِ کف شناسی کے مطابق تفصیلی، خوبصورت انداز میں تجزیہ حاصل کریں۔ یہ محض روایتی و تفریحی تشریح ہے، سائنسی پیش گوئی نہیں۔",
-    tabReading:"کف بینی کروائیں", tabAura:"✨ Aura Camera", tabLearn:"علمِ کف شناسی سیکھیں",
+    tabReading:"کف بینی کروائیں", tabAura:"✨ Aura Camera",
     step1Title:"آپ کیا جاننا چاہتے ہیں؟",
     topicFull:"مکمل تجزیہ", topicMarriage:"شادی / محبت", topicHealth:"صحت کا رجحان",
     topicFate:"قسمت / کیریئر", topicWealth:"مالی معاملات", topicPersonality:"شخصیت",
@@ -1186,10 +842,10 @@ const I18N = {
     readingDisclaimerDefault:"یہ reading روایتی پامسٹری کی تشریحات پر مبنی ہے۔ پامسٹری سائنسی طور پر مستقبل کی پیش گوئی، بیماری کی تشخیص، fertility، اولاد کی تعداد یا جنس، موت کی عمر یا مالی کامیابی کی ضمانت دینے کا ثابت شدہ طریقہ نہیں ہے۔ اسے صرف روایتی/تفریحی interpretation سمجھیں۔"
   },
   en: {
-    brandName:"Palmistry", eyebrow:"TRADITIONAL PALMISTRY · AI ASSISTED",
+    brandName:"GetPalmAura",
     heroTitle:"Discover the Story in Your Hand",
     heroLead:"Upload a clear photo of your palm and get a detailed, beautifully presented reading based on traditional palmistry. This is a traditional / entertainment interpretation, not a scientific prediction.",
-    tabReading:"Get a Reading", tabAura:"✨ Aura Camera", tabLearn:"Learn Palmistry",
+    tabReading:"Get a Reading", tabAura:"✨ Aura Camera",
     step1Title:"What would you like to know?",
     topicFull:"Full Reading", topicMarriage:"Marriage / Love", topicHealth:"Health Tendency",
     topicFate:"Fate / Career", topicWealth:"Money / Wealth", topicPersonality:"Personality",
@@ -1560,10 +1216,8 @@ async function selectLanguage(code){
 function showTab(name){
   document.getElementById('viewReading').classList.toggle('hidden', name!=='reading');
   document.getElementById('viewAura').classList.toggle('hidden', name!=='aura');
-  document.getElementById('viewLearn').classList.toggle('hidden', name!=='learn');
   document.getElementById('tabReading').classList.toggle('active', name==='reading');
   document.getElementById('tabAura').classList.toggle('active', name==='aura');
-  document.getElementById('tabLearn').classList.toggle('active', name==='learn');
   if(name!=='aura' && typeof stopAuraLiveScan === 'function'){
     stopAuraLiveScan();
   }
