@@ -478,9 +478,23 @@
   <!-- ============ READING TAB ============ -->
   <div id="viewReading">
 
+    <div class="panel" id="stepHand">
+      <h2><span class="num">1</span><span data-i="step2TitleHand">ہاتھ منتخب کریں</span></h2>
+      <div class="hand-select">
+        <div class="hand-opt selected" id="optRight" onclick="selectHand('right')">
+          <span class="emoji">🖐️</span>
+          <span class="lbl" data-i="rightHand">دایاں ہاتھ</span>
+        </div>
+        <div class="hand-opt" id="optLeft" onclick="selectHand('left')">
+          <span class="emoji">🤚</span>
+          <span class="lbl" data-i="leftHand">بایاں ہاتھ</span>
+        </div>
+      </div>
+    </div>
+
     <div class="panel" id="stepTopic">
       <h2 class="collapsible-head" onclick="toggleTopicGrid()">
-        <span class="num">1</span><span data-i="step1Title">آپ کیا جاننا چاہتے ہیں؟</span>
+        <span class="num">2</span><span data-i="step1Title">آپ کیا جاننا چاہتے ہیں؟</span>
         <span class="topic-current" id="topicCurrentLbl">مکمل تجزیہ</span>
         <span class="triangle" id="topicTriangle">▶</span>
       </h2>
@@ -532,20 +546,6 @@
         </div>
       </div>
       <p class="topic-note" data-i="topicNote">جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔</p>
-      </div>
-    </div>
-
-    <div class="panel" id="stepHand">
-      <h2><span class="num">2</span><span data-i="step2TitleHand">ہاتھ منتخب کریں</span></h2>
-      <div class="hand-select">
-        <div class="hand-opt selected" id="optRight" onclick="selectHand('right')">
-          <span class="emoji">🖐️</span>
-          <span class="lbl" data-i="rightHand">دایاں ہاتھ</span>
-        </div>
-        <div class="hand-opt" id="optLeft" onclick="selectHand('left')">
-          <span class="emoji">🤚</span>
-          <span class="lbl" data-i="leftHand">بایاں ہاتھ</span>
-        </div>
       </div>
     </div>
 
