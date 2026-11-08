@@ -1083,6 +1083,7 @@ const I18N = {
     topicTravel:"سفر", topicChildren:"اولاد", topicHandFingers:"ہاتھ اور انگلیوں کی ساخت",
     topicMarks:"خاص نشانات", topicMounts:"Mounts (ابھار)",
     topicNote:"جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔",
+    photoHintHandPrefix:"اپنے {hand} کی", rightHandOblique:"دائیں ہاتھ", leftHandOblique:"بائیں ہاتھ",
     photoHintFull:"صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے",
     photoHintMarriage:"ہتھیلی کا وہ کنارہ جو چھوٹی انگلی کے نیچے ہے صاف نظر آئے — وہاں Marriage Lines ہوتی ہیں",
     photoHintHealth:"ہتھیلی کا درمیانی اور نچلا حصہ صاف نظر آئے تاکہ لکیرِ حیات اور صحت کی لکیر واضح ہوں",
@@ -1209,6 +1210,7 @@ const I18N = {
     topicTravel:"Travel", topicChildren:"Children", topicHandFingers:"Hand & Finger Shape",
     topicMarks:"Special Marks", topicMounts:"Mounts",
     topicNote:"Whichever topic you choose, the result will focus in detail only on that.",
+    photoHintHandPrefix:"On your {hand}:", rightHandOblique:"Right Hand", leftHandOblique:"Left Hand",
     photoHintFull:"In good light, your whole palm should be clearly visible",
     photoHintMarriage:"Keep the edge of your palm under the little finger clear — that's where Marriage Lines are",
     photoHintHealth:"Keep the middle and lower part of your palm clear so the Life Line and Health Line are visible",
@@ -1619,7 +1621,8 @@ function updateUploadHint(){
   const el = document.getElementById('uploadHint2');
   if(!el) return;
   const key = 'photoHint' + selectedTopic.charAt(0).toUpperCase() + selectedTopic.slice(1);
-  el.textContent = t(key);
+  const handKey = selectedHand === 'left' ? 'leftHandOblique' : 'rightHandOblique';
+  el.textContent = t('photoHintHandPrefix').replace('{hand}', t(handKey)) + ' ' + t(key);
 }
 
 /* ============================================================
@@ -1630,6 +1633,7 @@ function selectHand(h){
   selectedHand = h;
   document.getElementById('optRight').classList.toggle('selected', h==='right');
   document.getElementById('optLeft').classList.toggle('selected', h==='left');
+  updateUploadHint();
 }
 
 /* ============================================================
