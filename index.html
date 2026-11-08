@@ -545,6 +545,26 @@
           <span class="t-emoji">⛰️</span>
           <span class="t-lbl" data-i="topicMounts">Mounts (ابھار)</span>
         </div>
+        <div class="topic-opt" id="topicHeartLine" onclick="selectTopic('heartLine')">
+          <span class="t-emoji">❤️</span>
+          <span class="t-lbl" data-i="topicHeartLine">لکیرِ دل (Heart Line)</span>
+        </div>
+        <div class="topic-opt" id="topicLifeLine" onclick="selectTopic('lifeLine')">
+          <span class="t-emoji">🌿</span>
+          <span class="t-lbl" data-i="topicLifeLine">لکیرِ حیات (Life Line)</span>
+        </div>
+        <div class="topic-opt" id="topicHeadLine" onclick="selectTopic('headLine')">
+          <span class="t-emoji">🧠</span>
+          <span class="t-lbl" data-i="topicHeadLine">لکیرِ دماغ (Head Line)</span>
+        </div>
+        <div class="topic-opt" id="topicFame" onclick="selectTopic('fame')">
+          <span class="t-emoji">🏆</span>
+          <span class="t-lbl" data-i="topicFame">شہرت / کامیابی</span>
+        </div>
+        <div class="topic-opt" id="topicBracelets" onclick="selectTopic('bracelets')">
+          <span class="t-emoji">📿</span>
+          <span class="t-lbl" data-i="topicBracelets">کلائی کی کنگن لکیریں</span>
+        </div>
       </div>
       <p class="topic-note" data-i="topicNote">جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔</p>
       </div>
@@ -725,6 +745,8 @@ const I18N = {
     topicFate:"قسمت / کیریئر", topicWealth:"مالی معاملات", topicPersonality:"شخصیت",
     topicTravel:"سفر", topicChildren:"اولاد", topicHandFingers:"ہاتھ اور انگلیوں کی ساخت",
     topicMarks:"خاص نشانات", topicMounts:"Mounts (ابھار)",
+    topicHeartLine:"لکیرِ دل (Heart Line)", topicLifeLine:"لکیرِ حیات (Life Line)", topicHeadLine:"لکیرِ دماغ (Head Line)",
+    topicFame:"شہرت / کامیابی", topicBracelets:"کلائی کی کنگن لکیریں",
     topicNote:"جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔ دایاں اور بایاں ہاتھ روایتی طور پر مختلف چیزیں ظاہر کرتے ہیں، اسی لیے فہرست ہاتھ کے مطابق بدلتی ہے۔",
     photoHintHandPrefix:"اپنے {hand} کی", rightHandOblique:"دائیں ہاتھ", leftHandOblique:"بائیں ہاتھ",
     photoHintFull:"صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے",
@@ -738,6 +760,11 @@ const I18N = {
     photoHintHandFingers:"تمام پانچوں انگلیاں اور انگوٹھا مکمل اور صاف نظر آنے چاہئیں",
     photoHintMarks:"پوری ہتھیلی قریب سے، اچھی روشنی میں صاف نظر آئے",
     photoHintMounts:"ہتھیلی کا گوشت دار حصہ (انگوٹھے کے نیچے اور کنارے) صاف نظر آئے",
+    photoHintHeartLine:"ہتھیلی کا اوپری حصہ، انگلیوں کے بالکل نیچے، صاف نظر آئے",
+    photoHintLifeLine:"انگوٹھے کے گرد کا حصہ صاف نظر آئے، جہاں یہ لکیر کلائی کی طرف مڑتی ہے",
+    photoHintHeadLine:"ہتھیلی کا درمیانی حصہ، انگوٹھے سے دوسری طرف تک، صاف نظر آئے",
+    photoHintFame:"انگوٹھی والی انگلی کے نیچے کا حصہ صاف نظر آئے (Sun Line)",
+    photoHintBracelets:"کلائی اور ہتھیلی کا جوڑ صاف نظر آئے",
     step2TitleHand:"ہاتھ منتخب کریں", rightHand:"دایاں ہاتھ", leftHand:"بایاں ہاتھ",
     step2Title:"ہتھیلی کی تصویر دیں",
     uploadHint1:"تصویر منتخب کرنے کے لیے یہاں دبائیں",
@@ -852,6 +879,8 @@ const I18N = {
     topicFate:"Fate / Career", topicWealth:"Money / Wealth", topicPersonality:"Personality",
     topicTravel:"Travel", topicChildren:"Children", topicHandFingers:"Hand & Finger Shape",
     topicMarks:"Special Marks", topicMounts:"Mounts",
+    topicHeartLine:"Heart Line", topicLifeLine:"Life Line", topicHeadLine:"Head Line",
+    topicFame:"Fame / Success", topicBracelets:"Bracelet Lines",
     topicNote:"Whichever topic you choose, the result will focus in detail only on that. The right and left hand traditionally reveal different things, so the list changes with your hand choice.",
     photoHintHandPrefix:"On your {hand}:", rightHandOblique:"Right Hand", leftHandOblique:"Left Hand",
     photoHintFull:"In good light, your whole palm should be clearly visible",
@@ -865,6 +894,11 @@ const I18N = {
     photoHintHandFingers:"All five fingers and the thumb should be fully and clearly visible",
     photoHintMarks:"Keep your whole palm clearly visible, up close, in good light",
     photoHintMounts:"Keep the fleshy parts of your palm (under the thumb and along the edges) clearly visible",
+    photoHintHeartLine:"Keep the upper part of your palm, just below the fingers, clearly visible",
+    photoHintLifeLine:"Keep the area around your thumb clearly visible, where this line curves toward the wrist",
+    photoHintHeadLine:"Keep the middle of your palm, from the thumb side across, clearly visible",
+    photoHintFame:"Keep the area under your ring finger clearly visible (Sun Line)",
+    photoHintBracelets:"Keep the join between your wrist and palm clearly visible",
     step2TitleHand:"Select Your Hand", rightHand:"Right Hand", leftHand:"Left Hand",
     step2Title:"Provide a Palm Photo",
     uploadHint1:"Tap here to choose a photo",
@@ -1228,14 +1262,14 @@ function showTab(name){
    TOPIC SELECT
    ============================================================ */
 let selectedTopic = 'full';
-const TOPIC_IDS = ['full','marriage','health','fate','wealth','personality','travel','children','handFingers','marks','mounts'];
+const TOPIC_IDS = ['full','marriage','health','fate','wealth','personality','travel','children','handFingers','marks','mounts','heartLine','lifeLine','headLine','fame','bracelets'];
 // Traditional framing: the non-dominant hand is read as the "born
 // with" / innate hand, the dominant hand as the "developed through
 // life" hand — so which topics are relevant genuinely differs by
 // hand, not just which specific hand photo is uploaded.
 const HAND_TOPICS = {
-  right: ['full','marriage','health','wealth','travel','children','marks'],
-  left: ['full','personality','handFingers','mounts','fate']
+  right: ['full','marriage','health','wealth','travel','children','marks','heartLine','fame','bracelets'],
+  left: ['full','personality','handFingers','mounts','fate','lifeLine','headLine']
 };
 
 function toggleTopicGrid(){
@@ -2053,8 +2087,8 @@ function renderResults(data){
     handType: topic==='full' || topic==='personality' || topic==='handFingers',
     fingers: topic==='full' || topic==='handFingers',
     thumb: topic==='full' || topic==='handFingers',
-    lines: topic==='full' || topic==='marriage' || topic==='health' || topic==='fate',
-    secondary: topic==='full' || topic==='marriage' || topic==='health' || topic==='travel',
+    lines: topic==='full' || topic==='marriage' || topic==='health' || topic==='fate' || topic==='heartLine' || topic==='lifeLine' || topic==='headLine',
+    secondary: topic==='full' || topic==='marriage' || topic==='health' || topic==='travel' || topic==='fame' || topic==='bracelets',
     mounts: topic==='full' || topic==='mounts',
     marks: topic==='full' || topic==='marks',
     marriage: topic==='full' || topic==='marriage',
@@ -2076,7 +2110,10 @@ function renderResults(data){
       full: ['heart','head','life','fate'],
       marriage: ['heart'],
       health: ['life','head'],
-      fate: ['fate','head']
+      fate: ['fate','head'],
+      heartLine: ['heart'],
+      lifeLine: ['life'],
+      headLine: ['head']
     };
     const linesToShow = lineFilter[topic] || ['heart','head','life','fate'];
     let linesHtml = '';
@@ -2091,7 +2128,9 @@ function renderResults(data){
     const secondaryFilter = {
       marriage: ['marriage_lines'],
       health: ['health_line'],
-      travel: ['travel_lines']
+      travel: ['travel_lines'],
+      fame: ['sun_line'],
+      bracelets: ['bracelets']
     };
     const onlyKeys = secondaryFilter[topic] || null; // null = show all (full reading)
     html += cardSimple('〰️', t('resultTitleSecondary'), renderSecondary(data.secondary_lines, onlyKeys));

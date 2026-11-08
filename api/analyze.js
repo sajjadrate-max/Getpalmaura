@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
         : lang === "ur"
         ? "Urdu"
         : "English";
-    const VALID_TOPICS = ["full", "marriage", "health", "fate", "wealth", "personality", "travel", "children", "handFingers", "marks", "mounts"];
+    const VALID_TOPICS = ["full", "marriage", "health", "fate", "wealth", "personality", "travel", "children", "handFingers", "marks", "mounts", "heartLine", "lifeLine", "headLine", "fame", "bracelets"];
     const focusTopic = VALID_TOPICS.includes(topic) ? topic : "full";
 
     const approxBytes = Math.ceil((image.length * 3) / 4);
@@ -179,6 +179,11 @@ CRITICAL — SIMPLE, EXPLAINED LANGUAGE FOR ALL INTERPRETATION/MEANING FIELDS: E
     handFingers: "ہاتھ کی قسم اور انگلیوں/انگوٹھے کی ساخت (hand_type، fingers، thumb)",
     marks: "خاص نشانات (special_marks)",
     mounts: "Mounts/ابھار (mounts)",
+    heartLine: "صرف لکیرِ دل (heart_line)",
+    lifeLine: "صرف لکیرِ حیات (life_line)",
+    headLine: "صرف لکیرِ دماغ (head_line)",
+    fame: "شہرت اور کامیابی کا روایتی رجحان (secondary_lines.sun_line)",
+    bracelets: "کلائی کی کنگن لکیریں (secondary_lines.bracelets)",
   };
   const TOPIC_LABELS_EN = {
     marriage: "marriage and love (heart_line, marriage_lines, relationships)",
@@ -191,6 +196,11 @@ CRITICAL — SIMPLE, EXPLAINED LANGUAGE FOR ALL INTERPRETATION/MEANING FIELDS: E
     handFingers: "hand shape and fingers/thumb structure (hand_type, fingers, thumb)",
     marks: "special marks (special_marks)",
     mounts: "mounts (mounts)",
+    heartLine: "just the Heart Line (heart_line)",
+    lifeLine: "just the Life Line (life_line)",
+    headLine: "just the Head Line (head_line)",
+    fame: "traditional fame and success tendency (secondary_lines.sun_line)",
+    bracelets: "bracelet/wrist lines (secondary_lines.bracelets)",
   };
   const focusInstruction =
     focusTopic && focusTopic !== "full"
