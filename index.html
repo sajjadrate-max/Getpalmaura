@@ -120,6 +120,25 @@
   }
   .site-footer-pills a{color:var(--gold-bright);text-decoration:none;}
 
+  /* LIVE CAMERA CAPTURE MODAL (Reading + Aura "take photo" buttons) */
+  .hand-cam-overlay{
+    position:fixed;inset:0;background:#000;z-index:950;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hand-cam-overlay.hidden{display:none;}
+  .hand-cam-overlay video{width:100%;height:100%;object-fit:cover;}
+  .hand-cam-topbar{position:absolute;top:0;left:0;right:0;padding:14px;display:flex;justify-content:flex-end;z-index:2;}
+  .hand-cam-close{
+    background:rgba(13,18,32,0.75);color:#fff;border:1px solid var(--line);border-radius:50%;
+    width:36px;height:36px;font-size:16px;cursor:pointer;
+  }
+  .hand-cam-capture-btn{
+    position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:2;
+    width:70px;height:70px;border-radius:50%;cursor:pointer;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:4px solid #fff;font-size:26px;
+  }
+  #handCamErrorBox{position:absolute;bottom:120px;left:16px;right:16px;z-index:2;}
+
   /* LANGUAGE PICKER MODAL */
   .lang-modal-overlay{
     position:fixed;inset:0;background:rgba(5,7,14,0.72);z-index:900;
@@ -556,7 +575,7 @@
           <div class="hint" data-i="uploadHint2">صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے</div>
         </div>
         <div class="upload-actions">
-          <button class="btn btn-outline btn-block" onclick="document.getElementById('cameraInput').click()">
+          <button class="btn btn-outline btn-block" onclick="takeHandPhoto()">
             <span>📸</span><span data-i="takePhoto">کیمرے سے تصویر لیں</span>
           </button>
         </div>
@@ -989,7 +1008,7 @@
             <div class="hint" data-i="auraUploadHint2">چہرہ صاف نظر آئے، روشنی اچھی ہو</div>
           </div>
           <div class="upload-actions">
-            <button class="btn btn-outline btn-block" onclick="document.getElementById('auraCameraInput').click()">
+            <button class="btn btn-outline btn-block" onclick="takeAuraUploadPhoto()">
               <span>📸</span><span data-i="auraTakePhoto">کیمرے سے تصویر لیں</span>
             </button>
           </div>
@@ -1589,19 +1608,36 @@ function handleFile(evt){
     showError(t('errBadImage'));
     return;
   }
-  compressImage(file, 1800, 0.85).then(function(dataUrl){
-    uploadedBase64 = dataUrl;
-    uploadedMime = 'image/jpeg';
-    document.getElementById('previewImg').src = uploadedBase64;
-    document.getElementById('uploadZoneBox').classList.add('hidden');
-    document.getElementById('previewBox').classList.remove('hidden');
-    document.getElementById('analyzeBtn').disabled = false;
-    clearError();
-    hideResults();
-  }).catch(function(err){
+  compressImage(file, 1800, 0.85).then(applyReadingImage).catch(function(err){
     console.error('Image compression error:', err);
     showError(t('errBadImage'));
   });
+}
+
+function applyReadingImage(dataUrl){
+  uploadedBase64 = dataUrl;
+  uploadedMime = 'image/jpeg';
+  document.getElementById('previewImg').src = uploadedBase64;
+  document.getElementById('uploadZoneBox').classList.add('hidden');
+  document.getElementById('previewBox').classList.remove('hidden');
+  document.getElementById('analyzeBtn').disabled = false;
+  clearError();
+  hideResults();
+}
+
+/**
+ * The "کیمرے سے تصویر لیں" / "take photo" button used to just trigger a
+ * file input with the capture attribute — but many in-app/embedded
+ * browsers (and some Android WebView/Chrome versions) ignore capture
+ * and fall back to the same gallery picker as the plain file input,
+ * making both buttons behave identically. Opening a live getUserMedia
+ * preview instead gives a real camera every time; only if the camera
+ * itself can't be opened (permission denied, no camera) do we fall
+ * back to the old file-input behavior.
+ */
+async function takeHandPhoto(){
+  const opened = await openCameraCapture('environment', applyReadingImage);
+  if(!opened) document.getElementById('cameraInput').click();
 }
 
 /**
@@ -1654,6 +1690,64 @@ function resetImage(){
   const c = document.getElementById('annCanvas');
   const ctx = c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height);
+}
+
+/* ============================================================
+   SHARED LIVE CAMERA CAPTURE MODAL
+   Used by both the Reading and Aura "take photo" buttons so a real
+   camera opens every time, regardless of whether the browser honors
+   <input capture>. facingMode: 'environment' (back camera, for
+   photographing the palm) or 'user' (front camera, for a selfie).
+   ============================================================ */
+let handCamStream = null;
+let handCamOnCapture = null;
+
+async function openCameraCapture(facingMode, onCaptured){
+  const overlay = document.getElementById('handCamOverlay');
+  const video = document.getElementById('handCamVideo');
+  const errBox = document.getElementById('handCamErrorBox');
+  if(!overlay || !video) return false;
+  if(errBox) errBox.innerHTML = '';
+  handCamOnCapture = onCaptured;
+  overlay.classList.remove('hidden');
+  try{
+    handCamStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 1280 } },
+      audio: false
+    });
+  }catch(err){
+    console.error('getUserMedia (camera capture) error:', err);
+    closeCameraCapture();
+    return false;
+  }
+  video.srcObject = handCamStream;
+  try{ await video.play(); }catch(e){ /* autoplay quirks are non-fatal here */ }
+  return true;
+}
+
+function closeCameraCapture(){
+  const overlay = document.getElementById('handCamOverlay');
+  if(overlay) overlay.classList.add('hidden');
+  if(handCamStream){
+    handCamStream.getTracks().forEach(tr=>tr.stop());
+    handCamStream = null;
+  }
+  const video = document.getElementById('handCamVideo');
+  if(video) video.srcObject = null;
+  handCamOnCapture = null;
+}
+
+function captureFromCamera(){
+  const video = document.getElementById('handCamVideo');
+  if(!video || !video.videoWidth) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  const cb = handCamOnCapture;
+  closeCameraCapture();
+  if(cb) cb(dataUrl);
 }
 
 function hideResults(){
@@ -1988,19 +2082,28 @@ function handleAuraFile(evt){
   }
   compressImage(file, 1800, 0.85).then(function(dataUrl){
     return cropImageToFace(dataUrl);
-  }).then(function(dataUrl){
-    uploadedAuraBase64 = dataUrl;
-    uploadedAuraMime = 'image/jpeg';
-    document.getElementById('auraPreviewImg').src = uploadedAuraBase64;
-    document.getElementById('auraUploadZoneBox').classList.add('hidden');
-    document.getElementById('auraPreviewBox').classList.remove('hidden');
-    document.getElementById('auraAnalyzeBtn').disabled = false;
-    clearAuraError();
-    hideAuraResults();
-  }).catch(function(err){
+  }).then(applyAuraImage).catch(function(err){
     console.error('Aura image compression error:', err);
     showAuraError(t('auraErrBadImage'));
   });
+}
+
+function applyAuraImage(dataUrl){
+  uploadedAuraBase64 = dataUrl;
+  uploadedAuraMime = 'image/jpeg';
+  document.getElementById('auraPreviewImg').src = uploadedAuraBase64;
+  document.getElementById('auraUploadZoneBox').classList.add('hidden');
+  document.getElementById('auraPreviewBox').classList.remove('hidden');
+  document.getElementById('auraAnalyzeBtn').disabled = false;
+  clearAuraError();
+  hideAuraResults();
+}
+
+async function takeAuraUploadPhoto(){
+  const opened = await openCameraCapture('user', function(dataUrl){
+    cropImageToFace(dataUrl).then(applyAuraImage);
+  });
+  if(!opened) document.getElementById('auraCameraInput').click();
 }
 
 function resetAuraImage(){
@@ -2687,5 +2790,12 @@ hideApkBoxIfInApp();
   }
 })();
 </script>
+
+<div class="hand-cam-overlay hidden" id="handCamOverlay">
+  <div class="hand-cam-topbar"><button class="hand-cam-close" onclick="closeCameraCapture()">✕</button></div>
+  <video id="handCamVideo" autoplay playsinline muted></video>
+  <div id="handCamErrorBox"></div>
+  <button class="hand-cam-capture-btn" onclick="captureFromCamera()">📸</button>
+</div>
 </body>
 </html>
