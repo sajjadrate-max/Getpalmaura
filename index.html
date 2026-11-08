@@ -216,6 +216,7 @@
     transition:border-color .15s, background .15s;
   }
   .topic-opt.selected{border-color:var(--gold);background:rgba(201,167,105,0.08);}
+  .topic-opt.hand-hidden{display:none;}
   .topic-opt .t-emoji{font-size:22px;display:block;margin-bottom:6px;}
   .topic-opt .t-lbl{font-size:13.5px;color:var(--ink);}
   .topic-note{font-size:12.5px;color:var(--muted);margin:12px 0 0;text-align:center;}
@@ -724,7 +725,7 @@ const I18N = {
     topicFate:"قسمت / کیریئر", topicWealth:"مالی معاملات", topicPersonality:"شخصیت",
     topicTravel:"سفر", topicChildren:"اولاد", topicHandFingers:"ہاتھ اور انگلیوں کی ساخت",
     topicMarks:"خاص نشانات", topicMounts:"Mounts (ابھار)",
-    topicNote:"جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔",
+    topicNote:"جو موضوع منتخب کریں گے، نتیجہ صرف اسی کے بارے میں تفصیل سے دکھایا جائے گا۔ دایاں اور بایاں ہاتھ روایتی طور پر مختلف چیزیں ظاہر کرتے ہیں، اسی لیے فہرست ہاتھ کے مطابق بدلتی ہے۔",
     photoHintHandPrefix:"اپنے {hand} کی", rightHandOblique:"دائیں ہاتھ", leftHandOblique:"بائیں ہاتھ",
     photoHintFull:"صاف روشنی میں، پوری ہتھیلی نظر آنی چاہیے",
     photoHintMarriage:"ہتھیلی کا وہ کنارہ جو چھوٹی انگلی کے نیچے ہے صاف نظر آئے — وہاں Marriage Lines ہوتی ہیں",
@@ -851,7 +852,7 @@ const I18N = {
     topicFate:"Fate / Career", topicWealth:"Money / Wealth", topicPersonality:"Personality",
     topicTravel:"Travel", topicChildren:"Children", topicHandFingers:"Hand & Finger Shape",
     topicMarks:"Special Marks", topicMounts:"Mounts",
-    topicNote:"Whichever topic you choose, the result will focus in detail only on that.",
+    topicNote:"Whichever topic you choose, the result will focus in detail only on that. The right and left hand traditionally reveal different things, so the list changes with your hand choice.",
     photoHintHandPrefix:"On your {hand}:", rightHandOblique:"Right Hand", leftHandOblique:"Left Hand",
     photoHintFull:"In good light, your whole palm should be clearly visible",
     photoHintMarriage:"Keep the edge of your palm under the little finger clear — that's where Marriage Lines are",
@@ -1228,6 +1229,14 @@ function showTab(name){
    ============================================================ */
 let selectedTopic = 'full';
 const TOPIC_IDS = ['full','marriage','health','fate','wealth','personality','travel','children','handFingers','marks','mounts'];
+// Traditional framing: the non-dominant hand is read as the "born
+// with" / innate hand, the dominant hand as the "developed through
+// life" hand — so which topics are relevant genuinely differs by
+// hand, not just which specific hand photo is uploaded.
+const HAND_TOPICS = {
+  right: ['full','marriage','health','wealth','travel','children','marks'],
+  left: ['full','personality','handFingers','mounts','fate']
+};
 
 function toggleTopicGrid(){
   const wrap = document.getElementById('topicGridWrap');
@@ -1273,7 +1282,24 @@ function selectHand(h){
   selectedHand = h;
   document.getElementById('optRight').classList.toggle('selected', h==='right');
   document.getElementById('optLeft').classList.toggle('selected', h==='left');
+  updateTopicOptionsForHand();
   updateUploadHint();
+}
+
+/**
+ * Shows only the topic options relevant to the selected hand (see
+ * HAND_TOPICS above). If the currently-selected topic isn't valid
+ * for the newly-selected hand, falls back to "full" automatically.
+ */
+function updateTopicOptionsForHand(){
+  const allowed = HAND_TOPICS[selectedHand] || HAND_TOPICS.right;
+  TOPIC_IDS.forEach(function(id){
+    const el = document.getElementById('topic' + id.charAt(0).toUpperCase() + id.slice(1));
+    if(el) el.classList.toggle('hand-hidden', allowed.indexOf(id) === -1);
+  });
+  if(allowed.indexOf(selectedTopic) === -1){
+    selectTopic('full');
+  }
 }
 
 /* ============================================================
@@ -2470,6 +2496,7 @@ hideApkBoxIfInApp();
   } else {
     setLang('ur');
   }
+  updateTopicOptionsForHand();
 })();
 </script>
 
