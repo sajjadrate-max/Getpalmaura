@@ -781,7 +781,7 @@ const I18N = {
     retakeBtn:"دوبارہ تصویر دیں",
     newReadingBtn:"نئی ریڈنگ کریں",
     copyBtn:"Copy کریں", printBtn:"Print کریں", downloadBtn:"Download کریں",
-    copiedMsg:"نتائج کاپی ہو گئے!",
+    copiedMsg:"نتائج کاپی ہو گئے!", copyFailedMsg:"یہ فیچر اس براؤزر میں کام نہیں کر رہا۔ براہ کرم صفحہ کسی اور براؤزر (جیسے Chrome) میں کھولیں۔",
     qualityGoodTitle:"تصویر کا معیار: مناسب",
     qualityPoorTitle:"تصویر کا معیار مناسب نہیں",
     resultTitleHandType:"ہاتھ کی قسم", resultTitleFingers:"انگلیاں",
@@ -915,7 +915,7 @@ const I18N = {
     retakeBtn:"Retake Photo",
     newReadingBtn:"Start New Reading",
     copyBtn:"Copy", printBtn:"Print", downloadBtn:"Download",
-    copiedMsg:"Results copied!",
+    copiedMsg:"Results copied!", copyFailedMsg:"This feature isn't supported in this browser. Please open the page in another browser (like Chrome).",
     qualityGoodTitle:"Image quality: good",
     qualityPoorTitle:"Image quality needs improvement",
     resultTitleHandType:"Hand Shape", resultTitleFingers:"Fingers",
@@ -2151,7 +2151,7 @@ function renderResults(data){
 
   html += `<div class="result-actions">
     <button class="btn btn-outline" onclick="copyResults()">📋 ${t('copyBtn')}</button>
-    <button class="btn btn-outline" onclick="window.print()">🖨️ ${t('printBtn')}</button>
+    <button class="btn btn-outline" onclick="printResults()">🖨️ ${t('printBtn')}</button>
     <button class="btn btn-outline" onclick="downloadResults()">⬇️ ${t('downloadBtn')}</button>
   </div>
   <button class="btn btn-gold btn-block" onclick="startNewReading()">🔁 ${t('newReadingBtn')}</button>`;
@@ -2376,6 +2376,11 @@ function lerpPoint(p1, p2, frac){
 }
 
 function clampFrac(v){ return Math.min(0.9, Math.max(0.18, v)); }
+// Callouts sit well above their anchor point (via negative margin),
+// so a point placed too close to the top of the photo can collide
+// with the "for entertainment only" banner. Keep a larger floor for
+// the vertical position specifically.
+function clampTopFrac(v){ return Math.min(0.88, Math.max(0.44, v)); }
 
 // Which life-timeline fields are relevant to each topic, so the
 // photo overlay only shows callouts that match what the user
@@ -2427,8 +2432,8 @@ function drawLifeTimelineOverlay(data){
   let html = `<div class="life-timeline-banner">${t('timelineBanner')}</div>`;
   items.forEach((item, i)=>{
     const left = clampFrac(item.point.x) * 100;
-    const top = clampFrac(item.point.y) * 100;
-    const extraLift = (i % 2) * 44;
+    const top = clampTopFrac(item.point.y) * 100;
+    const extraLift = (i % 3) * 40;
     html += `<div class="life-callout" style="left:${left}%;top:${top}%;margin-top:${-10 - extraLift}px;">
       <span class="emo">${item.emoji}</span>
       <span class="lbl">${escapeHtml(item.label)}</span>
@@ -2450,28 +2455,88 @@ function resultsAsText(){
   return JSON.stringify(lastResultData, null, 2);
 }
 
+/**
+ * Some embedded/in-app browsers (e.g. the X/Twitter in-app browser)
+ * don't implement navigator.clipboard at all, which throws
+ * synchronously rather than rejecting a promise — so the old code's
+ * .catch() never ran and the button silently did nothing. Fall back
+ * to the legacy execCommand('copy') method via a hidden textarea,
+ * which works in far more embedded browsers.
+ */
 function copyResults(){
   const el = document.getElementById('resultsBox');
   const text = el.innerText;
-  navigator.clipboard.writeText(text).then(()=>{
-    alert(t('copiedMsg'));
-  }).catch(()=>{
-    alert(t('copiedMsg'));
-  });
+
+  function legacyCopy(){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert(ok ? t('copiedMsg') : t('copyFailedMsg'));
+    }catch(e){
+      console.error('Legacy copy failed:', e);
+      alert(t('copyFailedMsg'));
+    }
+  }
+
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>{
+        alert(t('copiedMsg'));
+      }).catch(legacyCopy);
+    }else{
+      legacyCopy();
+    }
+  }catch(e){
+    console.error('Clipboard API unavailable:', e);
+    legacyCopy();
+  }
 }
 
+/**
+ * Blob-URL downloads can be blocked in some embedded browsers too.
+ * If the download click doesn't visibly do anything, fall back to
+ * opening the text in a new tab so the user can at least see/select/
+ * save it manually.
+ */
 function downloadResults(){
   const el = document.getElementById('resultsBox');
   const text = el.innerText;
-  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'palm-reading.txt';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try{
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'palm-reading.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){
+    console.error('Blob download failed, opening in a new tab instead:', e);
+    const win = window.open('', '_blank');
+    if(win){
+      win.document.write('<pre style="white-space:pre-wrap;font-family:sans-serif;padding:16px;">' + escapeHtml(text) + '</pre>');
+      win.document.close();
+    }else{
+      alert(t('copyFailedMsg'));
+    }
+  }
+}
+
+function printResults(){
+  try{
+    window.print();
+  }catch(e){
+    console.error('window.print() failed:', e);
+    alert(t('copyFailedMsg'));
+  }
 }
 
 function startNewReading(){
