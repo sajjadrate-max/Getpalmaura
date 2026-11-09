@@ -321,6 +321,18 @@
   @media (max-width:520px){.grid-2{grid-template-columns:1fr;}}
 
   .result-actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0;}
+  #resultActionMsg{margin:-6px 0 18px;}
+  #resultActionMsg:empty{margin:0;}
+  .action-msg{
+    background:var(--bg-panel);border:1px solid var(--gold);border-radius:10px;
+    padding:12px;font-size:13px;color:var(--ink);
+  }
+  .action-msg.success{border-color:#5be0b0;color:#5be0b0;text-align:center;font-weight:600;}
+  .action-msg textarea{
+    width:100%;margin-top:8px;background:var(--bg-deep);border:1px solid var(--line);
+    border-radius:8px;color:var(--ink);font-size:12px;padding:8px;min-height:120px;
+    font-family:'Inter',sans-serif;direction:ltr;text-align:left;
+  }
 
   .disclaimer-box{
     background:rgba(224,122,107,0.06);border:1px solid rgba(224,122,107,0.3);
@@ -783,7 +795,10 @@ const I18N = {
     retakeBtn:"دوبارہ تصویر دیں",
     newReadingBtn:"نئی ریڈنگ کریں",
     copyBtn:"Copy کریں", printBtn:"Print کریں", downloadBtn:"Download کریں",
-    copiedMsg:"نتائج کاپی ہو گئے!", copyFailedMsg:"یہ فیچر اس براؤزر میں کام نہیں کر رہا۔ براہ کرم صفحہ کسی اور براؤزر (جیسے Chrome) میں کھولیں۔",
+    copiedMsg:"نتائج کاپی ہو گئے!",
+    copyFailedMsg:"خودکار کاپی اس براؤزر میں کام نہیں کر رہی۔ نیچے دیا گیا متن خود منتخب ہے — اسے long-press کر کے 'Copy' منتخب کریں۔",
+    downloadFallbackMsg:"ڈاؤن لوڈ کے لیے نیچے دیا گیا متن منتخب کریں اور 'Copy' کے بعد کسی نوٹ ایپ میں 'Paste' کر کے محفوظ کریں۔",
+    printFallbackMsg:"اس براؤزر میں پرنٹ سپورٹ نہیں ہے۔ نیچے دیا گیا متن منتخب کر کے کاپی کر لیں، یا صفحہ Chrome براؤزر میں کھول کر پرنٹ کریں۔",
     qualityGoodTitle:"تصویر کا معیار: مناسب",
     qualityPoorTitle:"تصویر کا معیار مناسب نہیں",
     resultTitleHandType:"ہاتھ کی قسم", resultTitleFingers:"انگلیاں",
@@ -917,7 +932,10 @@ const I18N = {
     retakeBtn:"Retake Photo",
     newReadingBtn:"Start New Reading",
     copyBtn:"Copy", printBtn:"Print", downloadBtn:"Download",
-    copiedMsg:"Results copied!", copyFailedMsg:"This feature isn't supported in this browser. Please open the page in another browser (like Chrome).",
+    copiedMsg:"Results copied!",
+    copyFailedMsg:"Automatic copy isn't working in this browser. The text below is already selected — long-press it and choose 'Copy'.",
+    downloadFallbackMsg:"To save this, select the text below, copy it, then paste it into a notes app.",
+    printFallbackMsg:"Printing isn't supported in this browser. Select and copy the text below, or open the page in Chrome to print.",
     qualityGoodTitle:"Image quality: good",
     qualityPoorTitle:"Image quality needs improvement",
     resultTitleHandType:"Hand Shape", resultTitleFingers:"Fingers",
@@ -2339,6 +2357,7 @@ function renderResults(data){
     <button class="btn btn-outline" onclick="printResults()">🖨️ ${t('printBtn')}</button>
     <button class="btn btn-outline" onclick="downloadResults()">⬇️ ${t('downloadBtn')}</button>
   </div>
+  <div id="resultActionMsg"></div>
   <button class="btn btn-gold btn-block" onclick="startNewReading()">🔁 ${t('newReadingBtn')}</button>`;
 
   box.innerHTML = html;
@@ -2648,11 +2667,41 @@ function resultsAsText(){
  * to the legacy execCommand('copy') method via a hidden textarea,
  * which works in far more embedded browsers.
  */
+/**
+ * Embedded/in-app browsers (e.g. the X/Twitter in-app browser) can
+ * block clipboard access, blob downloads, window.print(), AND even
+ * alert()/confirm() dialogs — so a button can "succeed" from the
+ * script's point of view (no error thrown) while nothing the user
+ * can actually see or use happens. Rather than trust any single API
+ * to have visibly worked, every action here also renders the full
+ * text inline as a selectable, read-only textarea the user can
+ * always long-press and copy/save themselves regardless of what the
+ * browser restricts — that is the one guaranteed-working path.
+ */
+function showResultTextFallback(introMsg){
+  const box = document.getElementById('resultActionMsg');
+  if(!box) return;
+  const text = document.getElementById('resultsBox').innerText;
+  box.innerHTML = `<div class="action-msg">
+    <div>${escapeHtml(introMsg)}</div>
+    <textarea readonly id="resultFallbackTextarea"></textarea>
+  </div>`;
+  const ta = document.getElementById('resultFallbackTextarea');
+  ta.value = text;
+  try{ ta.focus(); ta.select(); }catch(e){}
+}
+
+function showResultActionSuccess(msg){
+  const box = document.getElementById('resultActionMsg');
+  if(!box) return;
+  box.innerHTML = `<div class="action-msg success">${escapeHtml(msg)}</div>`;
+}
+
 function copyResults(){
-  const el = document.getElementById('resultsBox');
-  const text = el.innerText;
+  const text = document.getElementById('resultsBox').innerText;
 
   function legacyCopy(){
+    let ok = false;
     try{
       const ta = document.createElement('textarea');
       ta.value = text;
@@ -2661,19 +2710,22 @@ function copyResults(){
       document.body.appendChild(ta);
       ta.focus();
       ta.select();
-      const ok = document.execCommand('copy');
+      ok = document.execCommand('copy');
       document.body.removeChild(ta);
-      alert(ok ? t('copiedMsg') : t('copyFailedMsg'));
     }catch(e){
       console.error('Legacy copy failed:', e);
-      alert(t('copyFailedMsg'));
+    }
+    if(ok){
+      showResultActionSuccess(t('copiedMsg'));
+    }else{
+      showResultTextFallback(t('copyFailedMsg'));
     }
   }
 
   try{
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(()=>{
-        alert(t('copiedMsg'));
+        showResultActionSuccess(t('copiedMsg'));
       }).catch(legacyCopy);
     }else{
       legacyCopy();
@@ -2684,15 +2736,8 @@ function copyResults(){
   }
 }
 
-/**
- * Blob-URL downloads can be blocked in some embedded browsers too.
- * If the download click doesn't visibly do anything, fall back to
- * opening the text in a new tab so the user can at least see/select/
- * save it manually.
- */
 function downloadResults(){
-  const el = document.getElementById('resultsBox');
-  const text = el.innerText;
+  const text = document.getElementById('resultsBox').innerText;
   try{
     const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
     const url = URL.createObjectURL(blob);
@@ -2704,24 +2749,22 @@ function downloadResults(){
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }catch(e){
-    console.error('Blob download failed, opening in a new tab instead:', e);
-    const win = window.open('', '_blank');
-    if(win){
-      win.document.write('<pre style="white-space:pre-wrap;font-family:sans-serif;padding:16px;">' + escapeHtml(text) + '</pre>');
-      win.document.close();
-    }else{
-      alert(t('copyFailedMsg'));
-    }
+    console.error('Blob download failed:', e);
   }
+  // Blob downloads can silently no-op in embedded browsers without
+  // throwing, so always also show the guaranteed text fallback.
+  showResultTextFallback(t('downloadFallbackMsg'));
 }
 
 function printResults(){
-  try{
-    window.print();
-  }catch(e){
-    console.error('window.print() failed:', e);
-    alert(t('copyFailedMsg'));
+  if(typeof window.print === 'function'){
+    try{ window.print(); }catch(e){ console.error('window.print() failed:', e); }
   }
+  // window.print() can silently no-op in embedded browsers (no OS
+  // print dialog is reachable from inside them) without throwing, so
+  // always also surface the text so the user has something to work
+  // with either way.
+  showResultTextFallback(t('printFallbackMsg'));
 }
 
 function startNewReading(){
