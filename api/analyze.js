@@ -244,6 +244,13 @@ Fill the "life_timeline" object with five short, playful, traditional-palmistry-
 - "prosperity_age": a traditional age estimate for a period of financial prosperity, based on the fate_line/sun_line.
 Only fill a field if the line it is based on was itself confidently visible (heart_line for the first three, fate_line/sun_line for the last one); otherwise leave that field as an empty string. NEVER invent specifics with zero basis in any palmistry tradition — no country/city names, no child's gender, no exact calendar year, no guaranteed outcome. Ages/age-ranges only, always playful and varied (do not default to the same numbers for every reading), and this is covered by the same disclaimer as the rest of the reading.
 
+CHILDREN FIELD — BE CONCRETE ABOUT WHAT YOU SAW, NOT JUST A REASSURING PLATITUDE:
+Traditional palmistry reads "children lines" as small, fine vertical lines rising from the marriage line(s) on the outer edge of the palm, under the little finger. For the "children" object:
+- "signs": describe, in one concrete sentence, what you can actually see in THIS photo relevant to this — e.g. whether fine vertical lines are visible rising from a marriage line, how many look present, how clear/faint they are, or that they are not clearly visible at this image resolution. This is a visual observation, like the other line fields — never state an exact count as a certain fact, but you may describe the traditional impression (e.g. "ایک واضح اور ایک قدرے مدھم لکیر نظر آتی ہے" = "one clear and one fainter line is visible").
+- "interpretation": building on "signs", a warm, specific 20-35 word sentence about the traditional emotional/relational theme this suggests for this person's bond with children — avoid generic filler like "happiness and love" alone; tie it to something from "signs" or to the marriage_lines/heart_line context already described elsewhere in this reading.
+- "disclaimer": as before, state plainly that palmistry cannot scientifically determine the actual number or gender of children.
+Never state or imply a definite count — "signs" describes the visual impression, "interpretation" the traditional emotional theme, not a headcount.
+
 OUTPUT FORMAT:
 Respond with ONLY a single JSON object (no markdown fences, no commentary) matching this exact shape:
 
@@ -283,7 +290,7 @@ Respond with ONLY a single JSON object (no markdown fences, no commentary) match
   },
   "special_marks": [ { "type":"Star|Cross|Triangle|Square|Island|Circle|Trident|Fork|Grille|Vertical line|Horizontal line", "location":"", "meaning":"", "confidence":"" } ],
   "marriage": { "lines_count":"", "description":"", "shape":"", "forks_breaks":"", "confidence":"" },
-  "children": { "interpretation":"", "disclaimer":"" },
+  "children": { "signs":"", "interpretation":"", "disclaimer":"" },
   "personality": { "confidence_trait":"", "communication":"", "emotional_style":"", "decision_making":"", "creativity":"", "leadership":"" },
   "career": { "tendencies":"", "leadership":"", "business_tendency":"", "communication_work":"", "creative_work":"", "stability_vs_change":"" },
   "relationships": { "emotional_nature":"", "attachment_style":"", "communication":"", "tendencies":"" },
