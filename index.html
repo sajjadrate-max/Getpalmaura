@@ -120,6 +120,20 @@
   .hand-cam-overlay video{width:100%;height:100%;object-fit:cover;}
   .hand-cam-topbar{position:absolute;top:0;left:0;right:0;padding:14px;display:flex;justify-content:space-between;align-items:center;z-index:2;}
   #handScanCanvas{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1;}
+  #handScanProgressFill.verified{background:#22c55e;}
+  .hand-scan-success{
+    position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:rgba(5,10,8,0.55);
+  }
+  .hand-scan-success.hidden{display:none;}
+  .hand-scan-success-circle{
+    width:84px;height:84px;border-radius:50%;background:#22c55e;color:#fff;
+    font-size:42px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 6px rgba(34,197,94,0.25);
+    animation:handScanPop .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .hand-scan-success-text{color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+  @keyframes handScanPop{ from{ transform:scale(0.4); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .hand-cam-close{
     background:rgba(13,18,32,0.75);color:#fff;border:1px solid var(--line);border-radius:50%;
     width:36px;height:36px;font-size:16px;cursor:pointer;
@@ -824,7 +838,7 @@ const I18N = {
     scanStatusHold:"ہاتھ کو ساکن رکھیں…",
     scanStatusScanning:"لکیریں اسکین ہو رہی ہیں…",
     scanStatusAnalyzing:"تجزیہ ہو رہا ہے…",
-    scanStatusCapturing:"تصویر لی جا رہی ہے…",
+    scanStatusCapturing:"تصویر لی جا رہی ہے…", scanVerifiedMsg:"تصدیق ہو گئی",
     cameraErrorTitle:"کیمرہ استعمال نہیں ہو سکا",
     cameraErrorMsg:"کیمرے تک رسائی نہیں مل سکی۔ براہ کرم کیمرہ اجازت دیں یا 'تصویر اپلوڈ کریں' آپشن استعمال کریں۔",
     mediapipeErrorMsg:"لائیو اسکین لوڈ نہیں ہو سکا۔ براہ کرم 'تصویر اپلوڈ کریں' آپشن استعمال کریں۔",
@@ -961,7 +975,7 @@ const I18N = {
     scanStatusHold:"Hold your hand steady…",
     scanStatusScanning:"Scanning your palm lines…",
     scanStatusAnalyzing:"Analyzing…",
-    scanStatusCapturing:"Capturing image…",
+    scanStatusCapturing:"Capturing image…", scanVerifiedMsg:"Verified",
     cameraErrorTitle:"Couldn't access camera",
     cameraErrorMsg:"Camera access failed. Please allow camera permission, or use the 'Upload Photo' option instead.",
     mediapipeErrorMsg:"Live scan could not load. Please use the 'Upload Photo' option instead.",
@@ -1615,7 +1629,7 @@ function onHandScanResults(results){
 }
 
 function handleHandPresence(hasHand){
-  if(!handScanLoopActive) return;
+  if(!handScanLoopActive || handCaptureTriggered) return;
   const now = performance.now();
 
   if(handScanState === 'detecting'){
@@ -1626,7 +1640,7 @@ function handleHandPresence(hasHand){
       setHandScanProgress(Math.min(100, (heldMs / HAND_SCAN_HOLD_MS) * 100));
       if(heldMs >= HAND_SCAN_HOLD_MS && !handCaptureTriggered){
         handCaptureTriggered = true;
-        captureFromCamera();
+        showHandScanVerified();
       }
     }else{
       handDetectedSince = null;
@@ -1634,6 +1648,23 @@ function handleHandPresence(hasHand){
       setHandScanProgress(0);
     }
   }
+}
+
+/**
+ * The bank-app-style finishing touch: once the hand has been held
+ * steady long enough, flash a green checkmark + "تصدیق ہو گئی"
+ * ("Verified") for a moment before actually capturing, instead of
+ * just silently snapping the photo.
+ */
+function showHandScanVerified(){
+  const fill = document.getElementById('handScanProgressFill');
+  if(fill) fill.classList.add('verified');
+  const badge = document.getElementById('handScanHintBadge');
+  if(badge) badge.classList.add('hidden');
+  const successEl = document.getElementById('handScanSuccessOverlay');
+  if(successEl) successEl.classList.remove('hidden');
+  setHandScanStatusText(t('scanVerifiedMsg'));
+  setTimeout(captureFromCamera, 550);
 }
 
 function drawHandOutline(ctx, landmarks, W, H){
@@ -1650,11 +1681,14 @@ function drawHandOutline(ctx, landmarks, W, H){
   const x = minX*W, y = minY*H, w = (maxX-minX)*W, h = (maxY-minY)*H;
   const r = Math.min(w,h) * 0.15;
 
+  // Green, bank-verification style — the outline is only ever drawn
+  // while a hand is actually present, so green = "detected" directly.
+  const color = '#22c55e';
   ctx.save();
-  ctx.strokeStyle = '#e8c887';
-  ctx.lineWidth = Math.max(2, W * 0.006);
-  ctx.shadowColor = '#e8c887';
-  ctx.shadowBlur = 8;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(3, W * 0.008);
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
   ctx.beginPath();
   ctx.ellipse(x + w/2, y + h/2, w/2 + r*0.2, h/2 + r*0.2, 0, 0, 2*Math.PI);
   ctx.stroke();
@@ -1687,6 +1721,11 @@ function stopHandAutoDetect(){
   const statusBar = document.getElementById('handScanStatusBar');
   if(badge) badge.classList.add('hidden');
   if(statusBar) statusBar.classList.add('hidden');
+
+  const successEl = document.getElementById('handScanSuccessOverlay');
+  if(successEl) successEl.classList.add('hidden');
+  const fill = document.getElementById('handScanProgressFill');
+  if(fill){ fill.classList.remove('verified'); fill.style.width = '0%'; }
 
   const canvas = document.getElementById('handScanCanvas');
   if(canvas){
@@ -2858,6 +2897,10 @@ hideApkBoxIfInApp();
   <div class="face-scan-status-bar hidden" id="handScanStatusBar">
     <div class="face-scan-status-text" id="handScanStatusText" data-i="scanStatusDetecting">ہاتھ تلاش کیا جا رہا ہے…</div>
     <div class="face-scan-progress-track"><div class="face-scan-progress-fill" id="handScanProgressFill"></div></div>
+  </div>
+  <div class="hand-scan-success hidden" id="handScanSuccessOverlay">
+    <div class="hand-scan-success-circle">✓</div>
+    <div class="hand-scan-success-text" data-i="scanVerifiedMsg">تصدیق ہو گئی</div>
   </div>
   <div id="handCamErrorBox"></div>
   <button class="hand-cam-capture-btn" onclick="captureFromCamera()">📸</button>
