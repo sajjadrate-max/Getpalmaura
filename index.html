@@ -36,6 +36,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="ptr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <style>
   :root{
     --bg-deep:#0d1220;
@@ -117,7 +118,8 @@
   }
   .hand-cam-overlay.hidden{display:none;}
   .hand-cam-overlay video{width:100%;height:100%;object-fit:cover;}
-  .hand-cam-topbar{position:absolute;top:0;left:0;right:0;padding:14px;display:flex;justify-content:flex-end;z-index:2;}
+  .hand-cam-topbar{position:absolute;top:0;left:0;right:0;padding:14px;display:flex;justify-content:space-between;align-items:center;z-index:2;}
+  #handScanCanvas{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:1;}
   .hand-cam-close{
     background:rgba(13,18,32,0.75);color:#fff;border:1px solid var(--line);border-radius:50%;
     width:36px;height:36px;font-size:16px;cursor:pointer;
@@ -1464,10 +1466,15 @@ async function openCameraCapture(facingMode, onCaptured){
   }
   video.srcObject = handCamStream;
   try{ await video.play(); }catch(e){ /* autoplay quirks are non-fatal here */ }
+
+  if(facingMode === 'environment'){
+    startHandAutoDetect();
+  }
   return true;
 }
 
 function closeCameraCapture(){
+  stopHandAutoDetect();
   const overlay = document.getElementById('handCamOverlay');
   if(overlay) overlay.classList.add('hidden');
   if(handCamStream){
@@ -1490,6 +1497,184 @@ function captureFromCamera(){
   const cb = handCamOnCapture;
   closeCameraCapture();
   if(cb) cb(dataUrl);
+}
+
+/* ============================================================
+   LIVE HAND AUTO-SCAN (Reading flow's camera capture only)
+   Mirrors the Aura live face-scan pattern: once the camera opens,
+   look for a hand in frame and auto-capture once it's held steady
+   for a moment, with a timeout fallback. The manual 📸 button still
+   works at any time as an override, and if the Hands model itself
+   fails to load, auto-detect just quietly stays off — manual tap
+   remains fully functional either way.
+   ============================================================ */
+let handsDetectorInstance = null;
+let handScanLoopActive = false;
+let handScanRAFId = null;
+let handScanState = 'idle'; // idle | detecting
+let handDetectedSince = null;
+let handCaptureTriggered = false;
+let handScanTimeoutId = null;
+const HAND_SCAN_HOLD_MS = 900;
+const HAND_SCAN_TIMEOUT_MS = 6000;
+
+function getHandsDetector(){
+  return new Promise((resolve, reject)=>{
+    if(handsDetectorInstance){ resolve(handsDetectorInstance); return; }
+    try{
+      if(typeof Hands === 'undefined'){
+        reject(new Error('MediaPipe Hands script not loaded'));
+        return;
+      }
+      handsDetectorInstance = new Hands({
+        locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      handsDetectorInstance.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+      resolve(handsDetectorInstance);
+    }catch(e){ reject(e); }
+  });
+}
+
+async function startHandAutoDetect(){
+  let hd;
+  try{
+    hd = await getHandsDetector();
+    hd.onResults(onHandScanResults);
+  }catch(err){
+    console.error('MediaPipe Hands init error (auto-detect disabled, manual capture still works):', err);
+    return;
+  }
+
+  const badge = document.getElementById('handScanHintBadge');
+  const statusBar = document.getElementById('handScanStatusBar');
+  if(badge) badge.classList.remove('hidden');
+  if(statusBar) statusBar.classList.remove('hidden');
+
+  handScanState = 'detecting';
+  handDetectedSince = null;
+  handCaptureTriggered = false;
+  setHandScanStatusText(t('scanStatusDetecting'));
+  setHandScanProgress(0);
+
+  if(handScanTimeoutId) clearTimeout(handScanTimeoutId);
+  handScanTimeoutId = setTimeout(function(){
+    if(handScanLoopActive && !handCaptureTriggered){
+      handCaptureTriggered = true;
+      captureFromCamera();
+    }
+  }, HAND_SCAN_TIMEOUT_MS);
+
+  handScanLoopActive = true;
+  handScanLoop();
+}
+
+function handScanLoop(){
+  if(!handScanLoopActive) return;
+  const video = document.getElementById('handCamVideo');
+  if(video && video.readyState >= 2 && handsDetectorInstance){
+    handsDetectorInstance.send({ image: video }).catch(e=>console.error('Hands.send error:', e));
+  }
+  handScanRAFId = requestAnimationFrame(handScanLoop);
+}
+
+function onHandScanResults(results){
+  const canvas = document.getElementById('handScanCanvas');
+  const video = document.getElementById('handCamVideo');
+  if(!canvas || !video) return;
+  if(video.videoWidth && canvas.width !== video.videoWidth){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const landmarks = results.multiHandLandmarks && results.multiHandLandmarks[0];
+  handleHandPresence(!!landmarks);
+
+  if(landmarks){
+    drawHandOutline(ctx, landmarks, canvas.width, canvas.height);
+  }
+}
+
+function handleHandPresence(hasHand){
+  if(!handScanLoopActive) return;
+  const now = performance.now();
+
+  if(handScanState === 'detecting'){
+    if(hasHand){
+      if(!handDetectedSince) handDetectedSince = now;
+      setHandScanStatusText(t('scanStatusHold'));
+      const heldMs = now - handDetectedSince;
+      setHandScanProgress(Math.min(100, (heldMs / HAND_SCAN_HOLD_MS) * 100));
+      if(heldMs >= HAND_SCAN_HOLD_MS && !handCaptureTriggered){
+        handCaptureTriggered = true;
+        captureFromCamera();
+      }
+    }else{
+      handDetectedSince = null;
+      setHandScanStatusText(t('scanStatusDetecting'));
+      setHandScanProgress(0);
+    }
+  }
+}
+
+function drawHandOutline(ctx, landmarks, W, H){
+  let minX=1, minY=1, maxX=0, maxY=0;
+  landmarks.forEach(function(p){
+    if(p.x<minX) minX=p.x;
+    if(p.x>maxX) maxX=p.x;
+    if(p.y<minY) minY=p.y;
+    if(p.y>maxY) maxY=p.y;
+  });
+  const pad = 0.08;
+  minX = Math.max(0, minX-pad); minY = Math.max(0, minY-pad);
+  maxX = Math.min(1, maxX+pad); maxY = Math.min(1, maxY+pad);
+  const x = minX*W, y = minY*H, w = (maxX-minX)*W, h = (maxY-minY)*H;
+  const r = Math.min(w,h) * 0.15;
+
+  ctx.save();
+  ctx.strokeStyle = '#e8c887';
+  ctx.lineWidth = Math.max(2, W * 0.006);
+  ctx.shadowColor = '#e8c887';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, y + h/2, w/2 + r*0.2, h/2 + r*0.2, 0, 0, 2*Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function setHandScanStatusText(msg){
+  const badge = document.getElementById('handScanHintBadge');
+  const status = document.getElementById('handScanStatusText');
+  if(badge) badge.textContent = msg;
+  if(status) status.textContent = msg;
+}
+
+function setHandScanProgress(pct){
+  const fill = document.getElementById('handScanProgressFill');
+  if(fill) fill.style.width = pct + '%';
+}
+
+function stopHandAutoDetect(){
+  handScanLoopActive = false;
+  if(handScanRAFId) cancelAnimationFrame(handScanRAFId);
+  handScanRAFId = null;
+  if(handScanTimeoutId) clearTimeout(handScanTimeoutId);
+  handScanTimeoutId = null;
+  handScanState = 'idle';
+  handDetectedSince = null;
+  handCaptureTriggered = false;
+
+  const badge = document.getElementById('handScanHintBadge');
+  const statusBar = document.getElementById('handScanStatusBar');
+  if(badge) badge.classList.add('hidden');
+  if(statusBar) statusBar.classList.add('hidden');
+
+  const canvas = document.getElementById('handScanCanvas');
+  if(canvas){
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 }
 
 function hideResults(){
@@ -2621,8 +2806,16 @@ hideApkBoxIfInApp();
 </script>
 
 <div class="hand-cam-overlay hidden" id="handCamOverlay">
-  <div class="hand-cam-topbar"><button class="hand-cam-close" onclick="closeCameraCapture()">✕</button></div>
+  <div class="hand-cam-topbar">
+    <span class="face-scan-hint-badge hidden" id="handScanHintBadge" data-i="scanStatusDetecting">ہاتھ تلاش کیا جا رہا ہے…</span>
+    <button class="hand-cam-close" onclick="closeCameraCapture()">✕</button>
+  </div>
   <video id="handCamVideo" autoplay playsinline muted></video>
+  <canvas id="handScanCanvas"></canvas>
+  <div class="face-scan-status-bar hidden" id="handScanStatusBar">
+    <div class="face-scan-status-text" id="handScanStatusText" data-i="scanStatusDetecting">ہاتھ تلاش کیا جا رہا ہے…</div>
+    <div class="face-scan-progress-track"><div class="face-scan-progress-fill" id="handScanProgressFill"></div></div>
+  </div>
   <div id="handCamErrorBox"></div>
   <button class="hand-cam-capture-btn" onclick="captureFromCamera()">📸</button>
 </div>
