@@ -72,7 +72,7 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: 4000,
-          temperature: 0.4,
+          temperature: 0,
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: systemPrompt },
@@ -148,23 +148,33 @@ async function safeText(resp) {
 }
 
 /**
- * Derives the five "life_timeline" age estimates directly from the
- * heart_line/fate_line start_point/end_point coordinates the model already
- * reported for THIS photo, instead of trusting the model's own free-text
- * age guess. The model's free-text guesses were converging on the same
- * handful of "common" palmistry numbers (e.g. "32, 34") for almost every
- * photo; computing them here from the actual per-photo line geometry
- * guarantees the numbers genuinely differ hand-to-hand while staying
- * deterministic (the same photo always yields the same numbers).
+ * Derives the five "life_timeline" age estimates from the heart_line/
+ * fate_line "length_category"/"depth_category" judgments the model
+ * already reported for THIS photo, instead of trusting the model's own
+ * free-text age guess (which converged on the same handful of "common"
+ * palmistry numbers for almost every photo) and instead of raw x/y pixel
+ * coordinates (which turned out too noisy between photos/calls of the
+ * same hand — a small coordinate wobble could swing an age by 8+ years).
+ * A 3-way category judgment ("is this line Short/Medium/Long?") is a much
+ * coarser, more stable classification for a vision model to repeat
+ * consistently than a continuous coordinate estimate, so the same hand
+ * should now land on the same (or an adjacent) age band reliably, while
+ * two genuinely different hands still land on different bands.
  */
 function computeLifeTimeline(parsed, lang) {
   const empty = { partner_meeting_age: "", best_relationship_ages: "", marriage_age: "", first_child_age: "", prosperity_age: "" };
   if (!parsed || typeof parsed !== "object") return empty;
 
-  const hasPoint = (p) => p && typeof p.x === "number" && typeof p.y === "number" && isFinite(p.x) && isFinite(p.y);
-  const hasLinePoints = (line) => line && hasPoint(line.start_point) && hasPoint(line.end_point);
+  const LENGTH_IDX = { short: 0, medium: 1, long: 2 };
+  const DEPTH_IDX = { faint: 0, medium: 1, deep: 2 };
   const isConfident = (line) => line && typeof line.confidence === "string" && line.confidence.toLowerCase() !== "not visible";
-  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const categoryScore = (line) => {
+    if (!line) return null;
+    const lIdx = LENGTH_IDX[String(line.length_category || "").toLowerCase()];
+    const dIdx = DEPTH_IDX[String(line.depth_category || "").toLowerCase()];
+    if (lIdx === undefined || dIdx === undefined) return null;
+    return { lIdx, dIdx, combined: lIdx * 3 + dIdx }; // combined: 0 (short+faint) .. 8 (long+deep)
+  };
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const mapRange = (v, inMin, inMax, outMin, outMax) => {
     const t = clamp((v - inMin) / (inMax - inMin), 0, 1);
@@ -173,8 +183,8 @@ function computeLifeTimeline(parsed, lang) {
 
   const heartLine = parsed.heart_line;
   const fateLine = parsed.fate_line;
-  const heartOk = hasLinePoints(heartLine) && isConfident(heartLine);
-  const fateOk = hasLinePoints(fateLine) && isConfident(fateLine);
+  const heartScore = isConfident(heartLine) ? categoryScore(heartLine) : null;
+  const fateScore = isConfident(fateLine) ? categoryScore(fateLine) : null;
 
   let partnerAge = null;
   let marriageAge = null;
@@ -183,28 +193,20 @@ function computeLifeTimeline(parsed, lang) {
   let childAge = null;
   let prosperityAge = null;
 
-  if (heartOk) {
-    const hLen = dist(heartLine.start_point, heartLine.end_point);
-    partnerAge = clamp(Math.round(mapRange(heartLine.start_point.x, 0.05, 0.95, 31, 19)), 18, 33);
-    marriageAge = clamp(Math.round(mapRange(hLen, 0.08, 0.85, 23, 35)), 21, 37);
+  if (heartScore) {
+    partnerAge = Math.round(mapRange(heartScore.combined, 0, 8, 32, 19));
+    marriageAge = Math.round(mapRange(heartScore.combined, 0, 8, 36, 23));
     if (marriageAge <= partnerAge) marriageAge = partnerAge + 2;
 
-    const span = clamp(Math.round(mapRange(heartLine.end_point.y, 0.1, 0.9, 3, 9)), 2, 10);
-    relAge1 = clamp(partnerAge + Math.round(span / 2), 19, 40);
-    relAge2 = clamp(relAge1 + span, 20, 45);
+    relAge1 = clamp(partnerAge + 2 + heartScore.dIdx, 19, 40);
+    relAge2 = clamp(relAge1 + 3 + heartScore.lIdx, 20, 45);
 
-    if (fateOk) {
-      const fLen = dist(fateLine.start_point, fateLine.end_point);
-      childAge = clamp(marriageAge + Math.round(mapRange(fLen, 0.1, 0.9, 1, 7)), 20, 42);
-    } else {
-      childAge = clamp(marriageAge + 2, 20, 42);
-    }
+    const fateContribution = fateScore ? fateScore.lIdx : heartScore.lIdx;
+    childAge = clamp(marriageAge + 2 + fateContribution, 20, 42);
   }
 
-  if (fateOk) {
-    const fLen = dist(fateLine.start_point, fateLine.end_point);
-    const xShift = Math.round(mapRange(fateLine.end_point.x, 0, 1, -3, 3));
-    prosperityAge = clamp(Math.round(mapRange(fLen, 0.1, 0.9, 29, 47)) + xShift, 26, 52);
+  if (fateScore) {
+    prosperityAge = Math.round(mapRange(fateScore.combined, 0, 8, 29, 47));
   }
 
   const fmtAge = (n) => (lang === "ur" ? `تقریباً ${n} سال میں` : `around age ${n}`);
@@ -232,12 +234,12 @@ function computeLifeTimeline(parsed, lang) {
 function buildSystemPrompt(lang, langName, hand, focusTopic) {
   const langInstruction =
     lang === "ur"
-      ? `Write EVERY human-readable text value in the JSON in clear, natural Urdu — with NO exceptions. This includes not just long interpretation/description/meaning fields, but also every short value such as: start, end, length, depth, shape, breaks, branches, forks, islands, crosses, chains, relation_to_other_lines, level, thickness, spacing, location, type, status, message. For example, instead of "None" write "موجود نہیں", instead of "Straight" write "سیدھی", instead of "Curved" write "خم دار", instead of "Slightly Curved" write "قدرے خم دار", instead of "Present" write "موجود", instead of "Few" write "چند", instead of "Joined with Life Line" write "لائف لائن کے ساتھ ملی ہوئی", instead of "Between Thumb and Index Finger" write "انگوٹھے اور شہادت کی انگلی کے درمیان", instead of "Near Wrist" write "کلائی کے قریب", instead of "Long" write "لمبی", instead of "Deep" write "گہری", instead of "Under Ring Finger" write "انگوٹھی والی انگلی کے نیچے", instead of "Not clearly visible" write "تصویر میں واضح طور پر نظر نہیں آ رہی". The ONLY things that should remain in English/Latin script are: the JSON keys themselves (e.g. "heart_line", "confidence"), the confidence enum values which must stay exactly "High"/"Medium"/"Low"/"Not visible", the image_quality.status value ("good"/"poor"), the hand_type.type value (keep as "Earth Hand"/"Fire Hand"/"Air Hand"/"Water Hand"/"Mixed Type"), the mounts level value ("low"/"normal"/"developed"/"prominent"), and the special_marks.type value (keep as "Star"/"Cross"/"Triangle"/etc). Every other piece of text must be Urdu.
+      ? `Write EVERY human-readable text value in the JSON in clear, natural Urdu — with NO exceptions. This includes not just long interpretation/description/meaning fields, but also every short value such as: start, end, length, depth, shape, breaks, branches, forks, islands, crosses, chains, relation_to_other_lines, level, thickness, spacing, location, type, status, message. For example, instead of "None" write "موجود نہیں", instead of "Straight" write "سیدھی", instead of "Curved" write "خم دار", instead of "Slightly Curved" write "قدرے خم دار", instead of "Present" write "موجود", instead of "Few" write "چند", instead of "Joined with Life Line" write "لائف لائن کے ساتھ ملی ہوئی", instead of "Between Thumb and Index Finger" write "انگوٹھے اور شہادت کی انگلی کے درمیان", instead of "Near Wrist" write "کلائی کے قریب", instead of "Long" write "لمبی", instead of "Deep" write "گہری", instead of "Under Ring Finger" write "انگوٹھی والی انگلی کے نیچے", instead of "Not clearly visible" write "تصویر میں واضح طور پر نظر نہیں آ رہی". The ONLY things that should remain in English/Latin script are: the JSON keys themselves (e.g. "heart_line", "confidence"), the confidence enum values which must stay exactly "High"/"Medium"/"Low"/"Not visible", the heart_line/fate_line length_category value ("Short"/"Medium"/"Long") and depth_category value ("Faint"/"Medium"/"Deep"), the image_quality.status value ("good"/"poor"), the hand_type.type value (keep as "Earth Hand"/"Fire Hand"/"Air Hand"/"Water Hand"/"Mixed Type"), the mounts level value ("low"/"normal"/"developed"/"prominent"), and the special_marks.type value (keep as "Star"/"Cross"/"Triangle"/etc). Every other piece of text must be Urdu.
 
 MANDATORY FINAL SELF-CHECK (do this before you output anything): once you have drafted the JSON in your head, re-scan every single value you are about to write. If any value — however short — contains an English word or phrase that is not one of the specific enum values listed above, rewrite that value in Urdu before including it in your response. Do not submit a value like "Not clearly visible", "Between Thumb and Index Finger", "Slightly Curved", or any similar English phrase; every one of those must be Urdu text instead.
 
 CRITICAL — SIMPLE, EXPLAINED LANGUAGE FOR ALL INTERPRETATION/MEANING FIELDS: Every field that carries a traditional interpretation (interpretation, meaning, description on lines/fingers/mounts/secondary_lines/marriage/children, and every value inside personality/career/relationships/wealth) must be a full, easy-to-understand Urdu SENTENCE for an ordinary reader who has no background in palmistry — never a bare word or short technical label. Explain what the trait actually means in plain, everyday language, the way you'd explain it to a friend, in roughly 12-25 Urdu words. For example, instead of "متوازن" write "آپ محبت میں نہ بہت زیادہ جذباتی ہیں اور نہ بالکل سرد — دل اور دماغ دونوں سے کام لیتے ہیں، اور رشتوں کو سمجھداری سے نبھاتے ہیں۔"; instead of "مضبوط" (for leadership) write "آپ میں فطری قائدانہ صلاحیت ہے — لوگ آپ کی بات پر بھروسہ کرتے ہیں اور آپ ذمہ داری لینے سے نہیں گھبراتے۔"; instead of "اچھا" (for communication) write "آپ اپنی بات واضح اور مؤثر انداز میں پہنچا لیتے ہیں، اور دوسروں کی بات بھی توجہ سے سنتے ہیں۔". Apply this same rule to every personality/career/relationships/wealth value, every line's "interpretation" field, every finger/mount/secondary-line "meaning"/"description" field, and the marriage/children interpretation fields — none of them should ever be a single word or short label; each must be a short, warm, explained sentence.`
-      : `Write EVERY human-readable text value in the JSON in clear, natural, fluent ${langName} — with NO exceptions. This includes not just long interpretation/description/meaning fields, but also every short value such as: start, end, length, depth, shape, breaks, branches, forks, islands, crosses, chains, relation_to_other_lines, level, thickness, spacing, location, type, status, message. Do not leave any value in English unless ${langName} IS English. The ONLY things that must stay in English/Latin script regardless of the target language are: the JSON keys themselves (e.g. "heart_line", "confidence"), the confidence enum values which must stay exactly "High"/"Medium"/"Low"/"Not visible", the image_quality.status value ("good"/"poor"), the hand_type.type value (keep as "Earth Hand"/"Fire Hand"/"Air Hand"/"Water Hand"/"Mixed Type"), the mounts level value ("low"/"normal"/"developed"/"prominent"), and the special_marks.type value (keep as "Star"/"Cross"/"Triangle"/etc). Every other piece of text must be in ${langName}.
+      : `Write EVERY human-readable text value in the JSON in clear, natural, fluent ${langName} — with NO exceptions. This includes not just long interpretation/description/meaning fields, but also every short value such as: start, end, length, depth, shape, breaks, branches, forks, islands, crosses, chains, relation_to_other_lines, level, thickness, spacing, location, type, status, message. Do not leave any value in English unless ${langName} IS English. The ONLY things that must stay in English/Latin script regardless of the target language are: the JSON keys themselves (e.g. "heart_line", "confidence"), the confidence enum values which must stay exactly "High"/"Medium"/"Low"/"Not visible", the heart_line/fate_line length_category value ("Short"/"Medium"/"Long") and depth_category value ("Faint"/"Medium"/"Deep"), the image_quality.status value ("good"/"poor"), the hand_type.type value (keep as "Earth Hand"/"Fire Hand"/"Air Hand"/"Water Hand"/"Mixed Type"), the mounts level value ("low"/"normal"/"developed"/"prominent"), and the special_marks.type value (keep as "Star"/"Cross"/"Triangle"/etc). Every other piece of text must be in ${langName}.
 
 MANDATORY FINAL SELF-CHECK (do this before you output anything): once you have drafted the JSON in your head, re-scan every single value you are about to write. If any value — however short — is not in ${langName} and is not one of the specific enum values listed above, rewrite that value in ${langName} before including it in your response.
 
@@ -310,8 +312,14 @@ For every observation, include a "confidence" value: one of "High", "Medium", "L
 START/END POINT MARKERS — TWO POINTS PER LINE, NOT A FULL TRACE:
 For each of the four major lines (heart_line, head_line, life_line, fate_line), identify only its two endpoints in the photo — where it visibly starts and where it visibly ends — NOT the path in between. This is a much simpler, more reliable task than tracing the whole line, so take real care to be accurate here. For each line, if you can clearly see both endpoints, add a "start_point":{"x":0-1,"y":0-1} and "end_point":{"x":0-1,"y":0-1} (normalized to image width/height, x left-to-right, y top-to-bottom) placed exactly on the crease at that endpoint — not a rough guess nearby. Double-check: does this (x,y) genuinely sit on the visible crease at its start/end, not just in the general area? Only include start_point/end_point for a line if you are genuinely confident about BOTH locations; if you are not confident about either one, omit both fields for that line entirely rather than guessing — a missing marker is far better than a wrongly-placed one.
 
+LENGTH/DEPTH CATEGORY — A DELIBERATELY SIMPLE, CONSISTENT JUDGMENT FOR heart_line AND fate_line:
+For "heart_line" and "fate_line" ONLY, also fill "length_category" and "depth_category" with exactly one of the listed enum words (these stay in English exactly as written, like the confidence values). Judge these RELATIVE TO THE WHOLE VISIBLE PALM (proportion of the palm it crosses), never as an absolute pixel distance — this way your answer stays the same for the same hand even if the photo is zoomed in/out or cropped slightly differently.
+- "length_category": "Short" (ends well before reaching under the ring/little finger area), "Medium" (reaches roughly under the ring finger), or "Long" (reaches all the way to the outer edge of the palm, under the little finger).
+- "depth_category": "Faint" (thin, pale, hard to make out), "Medium" (clearly visible but unremarkable), or "Deep" (dark, bold, clearly carved-looking).
+Give your honest, careful best judgment — do not default to "Medium" for both out of caution; really look and pick whichever of the three genuinely matches what you see. If the line is not confidently visible at all, you may still give your best-guess category, since "confidence" already separately records how sure you are.
+
 "LIFE TIMELINE" FIELD — DO NOT FILL THIS YOURSELF:
-Leave every field inside "life_timeline" as an empty string (""). The app calculates these age estimates itself, afterwards, directly from the start_point/end_point coordinates you provide for heart_line and fate_line — it deliberately does not use any age you might write here, so do not spend effort guessing ages for this object. Just make sure heart_line and fate_line each get accurate, carefully-placed start_point/end_point values (per the instructions above) whenever you are confident about them, since the timeline ages depend entirely on those coordinates being correct.
+Leave every field inside "life_timeline" as an empty string (""). The app calculates these age estimates itself, afterwards, directly from the "length_category"/"depth_category" you set for heart_line and fate_line above — it deliberately does not use any age you might write here, so do not spend effort guessing ages for this object. Just make sure heart_line and fate_line each get an accurate length_category/depth_category (per the instructions above) whenever you are confident about them, since the timeline ages depend entirely on those two judgments being right and consistent for this specific hand.
 
 CHILDREN FIELD — BE CONCRETE ABOUT WHAT YOU SAW, NOT JUST A REASSURING PLATITUDE:
 Traditional palmistry reads "children lines" as small, fine vertical lines rising from the marriage line(s) on the outer edge of the palm, under the little finger. For the "children" object:
@@ -334,10 +342,10 @@ Respond with ONLY a single JSON object (no markdown fences, no commentary) match
     "little": { "length":"", "thickness":"", "shape":"", "spacing":"", "meaning":"", "confidence":"" }
   },
   "thumb": { "length":"", "width":"", "flexibility":"", "upper_phalanx":"", "lower_phalanx":"", "meaning":"", "confidence":"" },
-  "heart_line": { "start":"", "end":"", "length":"", "depth":"", "shape":"", "breaks":"", "branches":"", "forks":"", "islands":"", "crosses":"", "chains":"", "relation_to_other_lines":"", "interpretation":"", "confidence":"", "start_point":{"x":0.0,"y":0.0}, "end_point":{"x":0.0,"y":0.0} },
+  "heart_line": { "start":"", "end":"", "length":"", "depth":"", "shape":"", "breaks":"", "branches":"", "forks":"", "islands":"", "crosses":"", "chains":"", "relation_to_other_lines":"", "interpretation":"", "confidence":"", "length_category":"Short|Medium|Long", "depth_category":"Faint|Medium|Deep", "start_point":{"x":0.0,"y":0.0}, "end_point":{"x":0.0,"y":0.0} },
   "head_line": { "start":"", "end":"", "length":"", "depth":"", "shape":"", "breaks":"", "branches":"", "forks":"", "islands":"", "crosses":"", "chains":"", "relation_to_other_lines":"", "interpretation":"", "confidence":"", "start_point":{"x":0.0,"y":0.0}, "end_point":{"x":0.0,"y":0.0} },
   "life_line": { "start":"", "end":"", "length":"", "depth":"", "shape":"", "breaks":"", "branches":"", "forks":"", "islands":"", "crosses":"", "chains":"", "relation_to_other_lines":"", "interpretation":"", "confidence":"", "start_point":{"x":0.0,"y":0.0}, "end_point":{"x":0.0,"y":0.0} },
-  "fate_line": { "start":"", "end":"", "length":"", "depth":"", "shape":"", "breaks":"", "branches":"", "forks":"", "islands":"", "crosses":"", "chains":"", "relation_to_other_lines":"", "interpretation":"", "confidence":"", "start_point":{"x":0.0,"y":0.0}, "end_point":{"x":0.0,"y":0.0} },
+  "fate_line": { "start":"", "end":"", "length":"", "depth":"", "shape":"", "breaks":"", "branches":"", "forks":"", "islands":"", "crosses":"", "chains":"", "relation_to_other_lines":"", "interpretation":"", "confidence":"", "length_category":"Short|Medium|Long", "depth_category":"Faint|Medium|Deep", "start_point":{"x":0.0,"y":0.0}, "end_point":{"x":0.0,"y":0.0} },
   "secondary_lines": {
     "sun_line": { "description":"", "confidence":"" },
     "health_line": { "description":"", "confidence":"" },
