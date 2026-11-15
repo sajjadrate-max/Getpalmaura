@@ -144,6 +144,19 @@
     background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:4px solid #fff;font-size:26px;
   }
   #handCamErrorBox{position:absolute;bottom:120px;left:16px;right:16px;z-index:2;}
+  #handCamFocusLayer{position:absolute;inset:0;z-index:1;}
+  .hand-cam-focus-ring{
+    position:absolute;width:64px;height:64px;margin-left:-32px;margin-top:-32px;
+    border:2px solid #fff;border-radius:50%;pointer-events:none;
+    box-shadow:0 0 0 2px rgba(0,0,0,0.25);
+    animation:handCamFocusPulse .7s ease-out forwards;
+  }
+  @keyframes handCamFocusPulse{
+    0%{transform:scale(1.4);opacity:0;border-color:#fff;}
+    18%{opacity:1;}
+    55%{transform:scale(1);border-color:#22c55e;}
+    100%{transform:scale(0.92);opacity:0;border-color:#22c55e;}
+  }
 
   /* LANGUAGE PICKER MODAL */
   .lang-modal-overlay{
@@ -1499,6 +1512,8 @@ async function openCameraCapture(facingMode, onCaptured){
   video.srcObject = handCamStream;
   try{ await video.play(); }catch(e){ /* autoplay quirks are non-fatal here */ }
 
+  setupHandCamFocusTap();
+
   if(facingMode === 'environment'){
     startHandAutoDetect();
   }
@@ -1516,6 +1531,65 @@ function closeCameraCapture(){
   const video = document.getElementById('handCamVideo');
   if(video) video.srcObject = null;
   handCamOnCapture = null;
+  const focusLayer = document.getElementById('handCamFocusLayer');
+  if(focusLayer) focusLayer.innerHTML = '';
+}
+
+/* ============================================================
+   TAP-TO-FOCUS (camera capture modal, Reading + Aura alike)
+   Tapping anywhere on the live preview draws the familiar
+   phone-camera focus ring right at the tapped spot, and — where
+   the device/browser actually exposes it — asks the hardware to
+   refocus/sharpen on that point via applyConstraints. The ring
+   always shows (pure visual reassurance); the hardware refocus is
+   a best-effort bonus that silently no-ops where unsupported.
+   ============================================================ */
+let handCamFocusBound = false;
+
+function setupHandCamFocusTap(){
+  if(handCamFocusBound) return;
+  const layer = document.getElementById('handCamFocusLayer');
+  if(!layer) return;
+  layer.addEventListener('click', onHandCamFocusTap);
+  handCamFocusBound = true;
+}
+
+function onHandCamFocusTap(e){
+  const layer = e.currentTarget;
+  const rect = layer.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const nx = rect.width ? x / rect.width : 0.5;
+  const ny = rect.height ? y / rect.height : 0.5;
+
+  const ring = document.createElement('div');
+  ring.className = 'hand-cam-focus-ring';
+  ring.style.left = x + 'px';
+  ring.style.top = y + 'px';
+  layer.appendChild(ring);
+  ring.addEventListener('animationend', function(){ ring.remove(); });
+
+  tryHardwareFocus(nx, ny);
+}
+
+function tryHardwareFocus(nx, ny){
+  try{
+    if(!handCamStream) return;
+    const track = handCamStream.getVideoTracks && handCamStream.getVideoTracks()[0];
+    if(!track || typeof track.getCapabilities !== 'function') return;
+    const caps = track.getCapabilities();
+    if(!caps || !caps.focusMode) return;
+    const advanced = {};
+    if(caps.pointsOfInterest){
+      advanced.pointsOfInterest = [{ x: nx, y: ny }];
+    }
+    if(caps.focusMode.includes && caps.focusMode.includes('single-shot')){
+      advanced.focusMode = 'single-shot';
+    }
+    if(Object.keys(advanced).length){
+      track.applyConstraints({ advanced: [advanced] }).catch(function(){});
+    }
+  }catch(e){ /* hardware refocus is a best-effort enhancement only */ }
 }
 
 function captureFromCamera(){
@@ -2894,6 +2968,7 @@ hideApkBoxIfInApp();
   </div>
   <video id="handCamVideo" autoplay playsinline muted></video>
   <canvas id="handScanCanvas"></canvas>
+  <div id="handCamFocusLayer"></div>
   <div class="face-scan-status-bar hidden" id="handScanStatusBar">
     <div class="face-scan-status-text" id="handScanStatusText" data-i="scanStatusDetecting">ہاتھ تلاش کیا جا رہا ہے…</div>
     <div class="face-scan-progress-track"><div class="face-scan-progress-fill" id="handScanProgressFill"></div></div>
