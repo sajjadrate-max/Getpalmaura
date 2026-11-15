@@ -130,6 +130,8 @@ module.exports = async function handler(req, res) {
       return res.status(502).json({ error: "Could not parse the analysis result. Please try again." });
     }
 
+    parsed.life_timeline = computeLifeTimeline(parsed, lang);
+
     return res.status(200).json(parsed);
   } catch (err) {
     console.error("Unhandled error in /api/analyze:", err);
@@ -143,6 +145,79 @@ async function safeText(resp) {
   } catch (e) {
     return "";
   }
+}
+
+/**
+ * Derives the five "life_timeline" age estimates directly from the
+ * heart_line/fate_line start_point/end_point coordinates the model already
+ * reported for THIS photo, instead of trusting the model's own free-text
+ * age guess. The model's free-text guesses were converging on the same
+ * handful of "common" palmistry numbers (e.g. "32, 34") for almost every
+ * photo; computing them here from the actual per-photo line geometry
+ * guarantees the numbers genuinely differ hand-to-hand while staying
+ * deterministic (the same photo always yields the same numbers).
+ */
+function computeLifeTimeline(parsed, lang) {
+  const empty = { partner_meeting_age: "", best_relationship_ages: "", marriage_age: "", first_child_age: "", prosperity_age: "" };
+  if (!parsed || typeof parsed !== "object") return empty;
+
+  const hasPoint = (p) => p && typeof p.x === "number" && typeof p.y === "number" && isFinite(p.x) && isFinite(p.y);
+  const hasLinePoints = (line) => line && hasPoint(line.start_point) && hasPoint(line.end_point);
+  const isConfident = (line) => line && typeof line.confidence === "string" && line.confidence.toLowerCase() !== "not visible";
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const mapRange = (v, inMin, inMax, outMin, outMax) => {
+    const t = clamp((v - inMin) / (inMax - inMin), 0, 1);
+    return outMin + t * (outMax - outMin);
+  };
+
+  const heartLine = parsed.heart_line;
+  const fateLine = parsed.fate_line;
+  const heartOk = hasLinePoints(heartLine) && isConfident(heartLine);
+  const fateOk = hasLinePoints(fateLine) && isConfident(fateLine);
+
+  let partnerAge = null;
+  let marriageAge = null;
+  let relAge1 = null;
+  let relAge2 = null;
+  let childAge = null;
+  let prosperityAge = null;
+
+  if (heartOk) {
+    const hLen = dist(heartLine.start_point, heartLine.end_point);
+    partnerAge = clamp(Math.round(mapRange(heartLine.start_point.x, 0.05, 0.95, 31, 19)), 18, 33);
+    marriageAge = clamp(Math.round(mapRange(hLen, 0.08, 0.85, 23, 35)), 21, 37);
+    if (marriageAge <= partnerAge) marriageAge = partnerAge + 2;
+
+    const span = clamp(Math.round(mapRange(heartLine.end_point.y, 0.1, 0.9, 3, 9)), 2, 10);
+    relAge1 = clamp(partnerAge + Math.round(span / 2), 19, 40);
+    relAge2 = clamp(relAge1 + span, 20, 45);
+
+    if (fateOk) {
+      const fLen = dist(fateLine.start_point, fateLine.end_point);
+      childAge = clamp(marriageAge + Math.round(mapRange(fLen, 0.1, 0.9, 1, 7)), 20, 42);
+    } else {
+      childAge = clamp(marriageAge + 2, 20, 42);
+    }
+  }
+
+  if (fateOk) {
+    const fLen = dist(fateLine.start_point, fateLine.end_point);
+    const xShift = Math.round(mapRange(fateLine.end_point.x, 0, 1, -3, 3));
+    prosperityAge = clamp(Math.round(mapRange(fLen, 0.1, 0.9, 29, 47)) + xShift, 26, 52);
+  }
+
+  const fmtAge = (n) => (lang === "ur" ? `تقریباً ${n} سال میں` : `around age ${n}`);
+  const fmtAgePair = (a, b) =>
+    a === b ? fmtAge(a) : lang === "ur" ? `تقریباً ${a} اور ${b} سال میں` : `around ${a} and ${b}`;
+
+  return {
+    partner_meeting_age: partnerAge !== null ? fmtAge(partnerAge) : "",
+    best_relationship_ages: relAge1 !== null && relAge2 !== null ? fmtAgePair(relAge1, relAge2) : "",
+    marriage_age: marriageAge !== null ? fmtAge(marriageAge) : "",
+    first_child_age: childAge !== null ? fmtAge(childAge) : "",
+    prosperity_age: prosperityAge !== null ? fmtAge(prosperityAge) : "",
+  };
 }
 
 /**
@@ -235,14 +310,8 @@ For every observation, include a "confidence" value: one of "High", "Medium", "L
 START/END POINT MARKERS — TWO POINTS PER LINE, NOT A FULL TRACE:
 For each of the four major lines (heart_line, head_line, life_line, fate_line), identify only its two endpoints in the photo — where it visibly starts and where it visibly ends — NOT the path in between. This is a much simpler, more reliable task than tracing the whole line, so take real care to be accurate here. For each line, if you can clearly see both endpoints, add a "start_point":{"x":0-1,"y":0-1} and "end_point":{"x":0-1,"y":0-1} (normalized to image width/height, x left-to-right, y top-to-bottom) placed exactly on the crease at that endpoint — not a rough guess nearby. Double-check: does this (x,y) genuinely sit on the visible crease at its start/end, not just in the general area? Only include start_point/end_point for a line if you are genuinely confident about BOTH locations; if you are not confident about either one, omit both fields for that line entirely rather than guessing — a missing marker is far better than a wrongly-placed one.
 
-TRADITIONAL "LIFE TIMELINE" AGE ESTIMATES (fun, playful, clearly traditional/entertainment — no coordinates needed here, text only):
-Fill the "life_timeline" object with five short, playful, traditional-palmistry-style age estimates, one sentence/phrase fragment each (a few words, e.g. "28 سال کے آس پاس" or "32، 34 اور 37 سال میں" in Urdu, or "around age 28" / "around 32, 34, and 37" in other languages). Treat this exactly like the existing marriage/children/wealth fields: light traditional interpretation framed as fun, never a real prediction.
-- "partner_meeting_age": a traditional age estimate for when this person's heart_line traditionally suggests meeting a significant partner.
-- "best_relationship_ages": a traditional age estimate (can be 1-3 ages/years) for when the heart_line traditionally suggests their strongest/most meaningful relationship period(s).
-- "marriage_age": a traditional age estimate for marriage, based on the heart_line/marriage_lines.
-- "first_child_age": a traditional age estimate for a first child, based on marriage_lines/children-line folklore.
-- "prosperity_age": a traditional age estimate for a period of financial prosperity, based on the fate_line/sun_line.
-Only fill a field if the line it is based on was itself confidently visible (heart_line for the first three, fate_line/sun_line for the last one); otherwise leave that field as an empty string. NEVER invent specifics with zero basis in any palmistry tradition — no country/city names, no child's gender, no exact calendar year, no guaranteed outcome. Ages/age-ranges only, always playful and varied (do not default to the same numbers for every reading), and this is covered by the same disclaimer as the rest of the reading.
+"LIFE TIMELINE" FIELD — DO NOT FILL THIS YOURSELF:
+Leave every field inside "life_timeline" as an empty string (""). The app calculates these age estimates itself, afterwards, directly from the start_point/end_point coordinates you provide for heart_line and fate_line — it deliberately does not use any age you might write here, so do not spend effort guessing ages for this object. Just make sure heart_line and fate_line each get accurate, carefully-placed start_point/end_point values (per the instructions above) whenever you are confident about them, since the timeline ages depend entirely on those coordinates being correct.
 
 CHILDREN FIELD — BE CONCRETE ABOUT WHAT YOU SAW, NOT JUST A REASSURING PLATITUDE:
 Traditional palmistry reads "children lines" as small, fine vertical lines rising from the marriage line(s) on the outer edge of the palm, under the little finger. For the "children" object:
