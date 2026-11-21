@@ -818,6 +818,7 @@ const I18N = {
     errNoImage:"براہ کرم پہلے ہتھیلی کی تصویر منتخب کریں۔",
     errGeneric:"معذرت، تجزیہ مکمل نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
     errTimeout:"سرور سے جواب آنے میں تاخیر ہوئی۔ براہ کرم انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔",
+    errNoInternet:"🛜 انٹرنیٹ کنکشن نہیں ہے۔ یہ فیچر استعمال کرنے کے لیے انٹرنیٹ آن کر کے دوبارہ کوشش کریں۔",
     errBadImage:"تصویر واضح نہیں ہے۔ براہ کرم بہتر روشنی میں، قریب سے، پوری ہتھیلی کی صاف تصویر دوبارہ لیں۔",
     retakeBtn:"دوبارہ تصویر دیں",
     newReadingBtn:"نئی ریڈنگ کریں",
@@ -955,6 +956,7 @@ const I18N = {
     errNoImage:"Please select a palm photo first.",
     errGeneric:"Sorry, the analysis could not be completed. Please try again.",
     errTimeout:"The server took too long to respond. Please check your connection and try again.",
+    errNoInternet:"🛜 No internet connection. Please turn on the internet and try again to use this feature.",
     errBadImage:"The image isn't clear enough. Please retake it in better light, closer, with the whole palm visible.",
     retakeBtn:"Retake Photo",
     newReadingBtn:"Start New Reading",
@@ -1218,17 +1220,59 @@ function t(key){
   return key;
 }
 
+let langModalHistoryPushed = false;
+
 function openLangModal(){
   const overlay = document.getElementById('langModalOverlay');
   if(overlay) overlay.classList.remove('hidden');
   renderLangList('');
   const input = document.getElementById('langSearchInput');
   if(input){ input.value=''; setTimeout(()=>input.focus(), 50); }
+  if(!langModalHistoryPushed){
+    langModalHistoryPushed = true;
+    history.pushState({ palmOverlay: 'lang' }, '', location.href);
+  }
 }
+/* Public close (✕ button, backdrop click, selecting a language): hides
+   immediately, then pops the pushed history entry (so a later device
+   back button finds nothing left to close and can exit the app). */
 function closeLangModal(){
+  hideLangModalUI();
+  if(langModalHistoryPushed){
+    langModalHistoryPushed = false;
+    history.back();
+  }
+}
+/* Real close logic; also called directly by the popstate handler when
+   the device back button is what closed the modal. */
+function hideLangModalUI(){
   const overlay = document.getElementById('langModalOverlay');
   if(overlay) overlay.classList.add('hidden');
 }
+
+/**
+ * MOBILE/APP BACK BUTTON — close the open overlay instead of exiting.
+ * Every full-screen overlay (camera capture, language picker) pushes a
+ * history entry when it opens, which is what makes the Android WebView
+ * app's canGoBack() true. Pressing the phone's back button then
+ * navigates this one step back instead of falling through to the
+ * native code that closes the whole app — and this handler is what
+ * actually hides whichever overlay was open when that navigation
+ * happens. (If the in-app ✕/close button was used instead, the flag
+ * checked here is already false by the time this fires, so it no-ops.)
+ */
+window.addEventListener('popstate', function(){
+  const camOverlay = document.getElementById('handCamOverlay');
+  if(camModalHistoryPushed && camOverlay && !camOverlay.classList.contains('hidden')){
+    camModalHistoryPushed = false;
+    hideCameraCaptureUI();
+  }
+  const langOverlay = document.getElementById('langModalOverlay');
+  if(langModalHistoryPushed && langOverlay && !langOverlay.classList.contains('hidden')){
+    langModalHistoryPushed = false;
+    hideLangModalUI();
+  }
+});
 function renderLangList(query){
   const list = document.getElementById('langList');
   if(!list) return;
@@ -1490,6 +1534,7 @@ function resetImage(){
    ============================================================ */
 let handCamStream = null;
 let handCamOnCapture = null;
+let camModalHistoryPushed = false;
 
 async function openCameraCapture(facingMode, onCaptured){
   const overlay = document.getElementById('handCamOverlay');
@@ -1499,6 +1544,10 @@ async function openCameraCapture(facingMode, onCaptured){
   if(errBox) errBox.innerHTML = '';
   handCamOnCapture = onCaptured;
   overlay.classList.remove('hidden');
+  if(!camModalHistoryPushed){
+    camModalHistoryPushed = true;
+    history.pushState({ palmOverlay: 'camera' }, '', location.href);
+  }
   try{
     handCamStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 1280 } },
@@ -1520,7 +1569,29 @@ async function openCameraCapture(facingMode, onCaptured){
   return true;
 }
 
+/**
+ * Public close: called by the ✕ button and by in-app code (capture
+ * success, getUserMedia error). Hides the UI immediately (no delay),
+ * then — if opening this modal had pushed a history entry (so the
+ * device back button would close it instead of exiting the whole
+ * app) — pops that now-stale entry with history.back(). The resulting
+ * async popstate event finds the overlay already hidden and no-ops.
+ */
 function closeCameraCapture(){
+  hideCameraCaptureUI();
+  if(camModalHistoryPushed){
+    camModalHistoryPushed = false;
+    history.back();
+  }
+}
+
+/**
+ * Real close logic, also invoked directly by the popstate handler when
+ * the device/browser back button is what closed the modal (the history
+ * entry is already consumed by that navigation, so no history.back()
+ * call here — doing so would incorrectly navigate again).
+ */
+function hideCameraCaptureUI(){
   stopHandAutoDetect();
   const overlay = document.getElementById('handCamOverlay');
   if(overlay) overlay.classList.add('hidden');
@@ -1818,6 +1889,15 @@ function showError(msg){
 }
 function clearError(){
   document.getElementById('errorBox').innerHTML = '';
+}
+
+/* API calls (/api/analyze, /api/aura) need the internet; the rest of this
+   site is static and works offline. Used to show a clear "no internet"
+   message instead of a generic error whenever one of those calls fails
+   because the device has no connection. */
+function isLikelyOfflineError(err){
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  return !!(err && err.name === 'TypeError');
 }
 
 function escapeHtml(s){
@@ -2193,6 +2273,10 @@ async function analyzeAura(){
     showAuraError(t('auraErrNoImage'));
     return;
   }
+  if(navigator.onLine === false){
+    showAuraError(t('errNoInternet'));
+    return;
+  }
   document.getElementById('auraLoadingPanel').classList.remove('hidden');
   document.getElementById('auraAnalyzeBtn').disabled = true;
 
@@ -2221,6 +2305,8 @@ async function analyzeAura(){
   }catch(err){
     if(err.name === 'AbortError'){
       showAuraError(t('auraErrTimeout'));
+    }else if(isLikelyOfflineError(err)){
+      showAuraError(t('errNoInternet'));
     }else{
       showAuraError(t('auraErrGeneric'));
     }
@@ -2313,6 +2399,10 @@ async function analyzePalm(){
     showError(t('errNoImage'));
     return;
   }
+  if(navigator.onLine === false){
+    showError(t('errNoInternet'));
+    return;
+  }
   document.getElementById('loadingPanel').classList.remove('hidden');
   document.getElementById('analyzeBtn').disabled = true;
 
@@ -2343,6 +2433,8 @@ async function analyzePalm(){
   }catch(err){
     if(err.name === 'AbortError'){
       showError(t('errTimeout'));
+    }else if(isLikelyOfflineError(err)){
+      showError(t('errNoInternet'));
     }else{
       showError(t('errGeneric'));
     }
