@@ -68,7 +68,43 @@ function buildPage(lang, content, hreflangBlock) {
   const cta = escapeHtml(c.cta);
   const home = escapeHtml(c.home);
   const disclaimer = escapeHtml(c.disclaimer);
+  const whatTitle = escapeHtml(c.whatTitle);
+  const what = escapeHtml(c.what);
+  const howTitle = escapeHtml(c.howTitle);
+  const how = escapeHtml(c.how);
+  const linesTitle = escapeHtml(c.linesTitle);
+  const lines = escapeHtml(c.lines);
+  const privacyTitle = escapeHtml(c.privacyTitle);
+  const privacy = escapeHtml(c.privacy);
+  const faqTitle = escapeHtml(c.faqTitle);
   const url = `${SITE_URL}/${lang.code}/`;
+
+  const faqHtml = c.faq
+    .map((pair) => `<h3>${escapeHtml(pair.q)}</h3>\n<p>${escapeHtml(pair.a)}</p>`)
+    .join("\n");
+
+  const faqSchemaEntities = c.faq.map((pair) => ({
+    "@type": "Question",
+    name: pair.q,
+    acceptedAnswer: { "@type": "Answer", text: pair.a },
+  }));
+  const jsonLd = JSON.stringify([
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "GetPalmAura",
+      url,
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Web",
+      inLanguage: lang.code,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqSchemaEntities,
+    },
+  ]);
 
   return `<!DOCTYPE html>
 <html lang="${lang.code}" dir="${c.dir}">
@@ -97,7 +133,7 @@ function buildPage(lang, content, hreflangBlock) {
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Nastaliq+Urdu:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/site.css">
 ${hreflangBlock}
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"GetPalmAura","url":"${url}","applicationCategory":"LifestyleApplication","operatingSystem":"Web","inLanguage":"${lang.code}","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">${jsonLd}</script>
 </head>
 <body>
 <header class="site-header"><div class="wrap">
@@ -109,7 +145,23 @@ ${hreflangBlock}
 <h1>${heading}</h1>
 <p>${intro}</p>
 <p><a href="/?lang=${lang.code}" style="display:inline-block;margin-top:10px;padding:12px 26px;border-radius:999px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a1305;font-weight:700;text-decoration:none;">${cta}</a></p>
+
+<h2>${whatTitle}</h2>
+<p>${what}</p>
+
+<h2>${howTitle}</h2>
+<p>${how}</p>
+
+<h2>${linesTitle}</h2>
+<p>${lines}</p>
+
+<h2>${privacyTitle}</h2>
+<p>${privacy}</p>
+
 <div class="note">${disclaimer}</div>
+
+<h2>${faqTitle}</h2>
+${faqHtml}
 </div>
 </main>
 </body>
